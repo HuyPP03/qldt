@@ -62,6 +62,11 @@ export default function HomeScreen() {
             icon="book-outline"
             onPress={() => router.push("/register-for-class")}
           />
+          <MenuItem
+            title="Danh sách lớp học"
+            icon="list-outline"
+            onPress={() => router.push("/classes")}
+          />
           <MenuItem title="Học phí" icon="cash-outline" onPress={() => {}} />
           <MenuItem
             title="Thông báo"
