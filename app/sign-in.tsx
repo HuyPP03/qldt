@@ -170,12 +170,15 @@ const styles = StyleSheet.create({
     color: "white",
     paddingRight: 50,
     marginBottom: 20,
+    lineHeight: 50,
   },
   eyeIcon: {
     position: "absolute",
     right: 12,
-    height: "100%",
+    top: 0,
+    bottom: 0,
     justifyContent: "center",
+    alignItems: "center",
   },
   modalOverlay: {
     flex: 1,

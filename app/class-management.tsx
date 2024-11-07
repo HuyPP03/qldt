@@ -77,7 +77,7 @@ export default function ClassManagement() {
     searchButton: {
       backgroundColor: "#CC0000",
       paddingHorizontal: 20,
-      height: 40,
+      height: 50,
       justifyContent: "center",
       borderRadius: 8,
     },
@@ -113,6 +113,7 @@ export default function ClassManagement() {
     tableCell: {
       padding: 12,
       width: 120,
+      height: 60,
       borderRightWidth: 1,
       borderBottomWidth: 1,
       borderColor: "#ddd",
@@ -123,6 +124,7 @@ export default function ClassManagement() {
       fontWeight: "bold",
       padding: 12,
       width: 120,
+      height: 60,
       borderRightWidth: 1,
       borderBottomWidth: 1,
       borderColor: "#ddd",
@@ -135,14 +137,14 @@ export default function ClassManagement() {
     },
     submitButton: {
       backgroundColor: "#CC0000",
-      paddingVertical: 12,
+      paddingVertical: 16,
       paddingHorizontal: 24,
       borderRadius: 8,
       flex: 1,
     },
     deleteButton: {
       backgroundColor: "#CC0000",
-      paddingVertical: 12,
+      paddingVertical: 16,
       paddingHorizontal: 24,
       borderRadius: 8,
       flex: 1,
