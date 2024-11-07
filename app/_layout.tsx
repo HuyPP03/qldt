@@ -9,6 +9,13 @@ export default function RootLayout() {
       <Stack.Screen name="get-code" options={{ headerShown: false }} />
       <Stack.Screen name="verify-code" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
+      <Stack.Screen
+        name="register-for-class"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen name="class-management" options={{ headerShown: false }} />
+      <Stack.Screen name="create-class" options={{ headerShown: false }} />
+      <Stack.Screen name="edit-class" options={{ headerShown: false }} />
     </Stack>
   );
 }
