@@ -5,7 +5,9 @@ import { useRouter } from "expo-router";
 
 export interface UserInfo {
   id: string;
-  username: string;
+  ho: string;
+  ten: string;
+  name: string;
   email: string;
   role: "STUDENT" | "LECTURER";
   avatar: string;

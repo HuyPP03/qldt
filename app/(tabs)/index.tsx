@@ -85,8 +85,10 @@ export default function HomeScreen() {
                   setIsDrawerOpen(false);
                 }}
               >
-                <Ionicons name="log-out-outline" size={24} color="#CC0000" />
-                <Text style={styles.drawerItemText}>Đăng xuất</Text>
+                <View style={styles.logoutButton}>
+                  <Ionicons name="log-out-outline" size={24} color="#fff" />
+                  <Text style={styles.logoutText}>Đăng xuất</Text>
+                </View>
               </TouchableOpacity>
             </Animated.View>
           </TouchableOpacity>
@@ -105,10 +107,10 @@ export default function HomeScreen() {
           />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {userInfo?.email || "Chưa đăng nhập"}
+              {userInfo?.ho + " " + userInfo?.ten || "Chưa đăng nhập"}
             </Text>
-            <Text style={styles.userRole}>
-              {userInfo?.role?.toLowerCase() || ""}
+            <Text style={styles.userEmail}>
+              {userInfo?.email?.toLowerCase() || ""}
             </Text>
             <Text style={styles.userDepartment}>Khoa Công nghệ thông tin</Text>
           </View>
@@ -192,7 +194,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 4,
   },
-  userRole: {
+  userEmail: {
     fontSize: 16,
     color: "#666",
     marginBottom: 2,
@@ -203,15 +205,25 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: "#CC0000",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginLeft: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
   logoutText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "500",
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 10,
   },
   menuButton: {
     padding: 8,
@@ -238,11 +250,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   drawerItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    marginTop: "auto",
+    marginBottom: 20,
   },
   drawerItemText: {
     marginLeft: 15,
