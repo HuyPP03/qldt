@@ -54,144 +54,6 @@ const Toast = ({ message }: { message: string }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    backgroundColor: "#CC0000",
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    paddingTop: Platform.OS === "ios" ? 50 : 30,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  headerText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-    flex: 1,
-    textAlign: "center",
-    marginRight: 24,
-  },
-  backButton: {
-    padding: 8,
-    ...(Platform.OS === "web" && {
-      cursor: "pointer",
-    }),
-  },
-  formContainer: {
-    padding: 16,
-  },
-  input: {
-    height: 50,
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#CC0000",
-    borderRadius: 0,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    backgroundColor: "white",
-  },
-  pickerContainer: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#CC0000",
-    borderRadius: 0,
-    marginBottom: 16,
-    backgroundColor: "white",
-  },
-  picker: {
-    height: 50,
-  },
-  timeContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
-    gap: 10,
-  },
-  timePickerContainer: {
-    flex: 1,
-    position: "relative",
-  },
-  label: {
-    marginBottom: 4,
-    color: "#CC0000",
-  },
-  timeInput: {
-    height: 50,
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#CC0000",
-    borderRadius: 0,
-    paddingHorizontal: 12,
-    backgroundColor: "white",
-    justifyContent: "center",
-  },
-  createButton: {
-    backgroundColor: "#CC0000",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  inputText: {
-    color: "#CC0000",
-    textAlignVertical: "center",
-    lineHeight: 50,
-  },
-  pickerText: {
-    color: "#CC0000",
-  },
-  datePickerWrapper: {
-    position: "absolute",
-    top: "100%",
-    left: 0,
-    right: 0,
-    backgroundColor: "white",
-    zIndex: 1000,
-  },
-  toastContainer: {
-    position: "absolute",
-    bottom: 50,
-    left: 20,
-    right: 20,
-    backgroundColor: "#ffebee",
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#CC0000",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 1000,
-  },
-  toastText: {
-    color: "#CC0000",
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-});
-
 export default function CreateClass() {
   const [classType, setClassType] = useState("LT");
   const [classId, setClassId] = useState("");
@@ -354,3 +216,141 @@ export default function CreateClass() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  header: {
+    backgroundColor: "#CC0000",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    paddingTop: Platform.OS === "ios" ? 50 : 30,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  headerText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+    marginRight: 24,
+  },
+  backButton: {
+    padding: 8,
+    ...(Platform.OS === "web" && {
+      cursor: "pointer",
+    }),
+  },
+  formContainer: {
+    padding: 16,
+  },
+  input: {
+    height: 50,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#CC0000",
+    borderRadius: 0,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    backgroundColor: "white",
+  },
+  pickerContainer: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#CC0000",
+    borderRadius: 0,
+    marginBottom: 16,
+    backgroundColor: "white",
+  },
+  picker: {
+    height: 50,
+  },
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    gap: 10,
+  },
+  timePickerContainer: {
+    flex: 1,
+    position: "relative",
+  },
+  label: {
+    marginBottom: 4,
+    color: "#CC0000",
+  },
+  timeInput: {
+    height: 50,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#CC0000",
+    borderRadius: 0,
+    paddingHorizontal: 12,
+    backgroundColor: "white",
+    justifyContent: "center",
+  },
+  createButton: {
+    backgroundColor: "#CC0000",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  inputText: {
+    color: "#CC0000",
+    textAlignVertical: "center",
+    lineHeight: 50,
+  },
+  pickerText: {
+    color: "#CC0000",
+  },
+  datePickerWrapper: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
+    zIndex: 1000,
+  },
+  toastContainer: {
+    position: "absolute",
+    bottom: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: "#ffebee",
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#CC0000",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  toastText: {
+    color: "#CC0000",
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+});
