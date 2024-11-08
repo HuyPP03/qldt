@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 interface MenuItemProps {
   title: string;
@@ -53,3 +54,68 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 });
+
+export const menuItems = [
+  {
+    title: "Thời khóa biểu",
+    icon: "calendar-outline" as const,
+    onPress: () => router.push("/"),
+    roles: ["STUDENT", "LECTURER"] as const,
+  },
+  {
+    title: "Thông báo",
+    icon: "notifications-outline" as const,
+    onPress: () => {},
+    roles: ["STUDENT", "LECTURER"] as const,
+  },
+  {
+    title: "Tài liệu",
+    icon: "document-text-outline" as const,
+    onPress: () => {},
+    roles: ["STUDENT", "LECTURER"] as const,
+  },
+  // Menu items chỉ dành cho Student
+  {
+    title: "Kết quả học tập",
+    icon: "school-outline" as const,
+    onPress: () => router.push("/"),
+    roles: ["STUDENT"] as const,
+  },
+  {
+    title: "Đăng ký học phần",
+    icon: "book-outline" as const,
+    onPress: () => router.push("/register-for-class"),
+    roles: ["STUDENT"] as const,
+  },
+  {
+    title: "Học phí",
+    icon: "cash-outline" as const,
+    onPress: () => {},
+    roles: ["STUDENT"] as const,
+  },
+  // Menu items chỉ dành cho Lecturer
+  {
+    title: "Quản lý lớp học",
+    icon: "people-outline" as const,
+    onPress: () => router.push("/class-management"),
+    roles: ["LECTURER"] as const,
+  },
+  {
+    title: "Điểm danh",
+    icon: "checkmark-circle-outline" as const,
+    onPress: () => {},
+    roles: ["LECTURER"] as const,
+  },
+  {
+    title: "Nhập điểm",
+    icon: "create-outline" as const,
+    onPress: () => {},
+    roles: ["LECTURER"] as const,
+  },
+  {
+    title: "Lịch công tác",
+    icon: "briefcase-outline" as const,
+    onPress: () => {},
+    roles: ["LECTURER"] as const,
+  },
+] as const;

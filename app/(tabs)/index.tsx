@@ -9,7 +9,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Text } from "react-native";
-import MenuItem from "../../components/MenuItem";
+import MenuItem, { menuItems } from "../../components/MenuItem";
 import { router } from "expo-router";
 import { useUser } from "../contexts/UserContext";
 import { Ionicons } from "@expo/vector-icons";
@@ -105,7 +105,7 @@ export default function HomeScreen() {
           />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {userInfo?.username || "Chưa đăng nhập"}
+              {userInfo?.email || "Chưa đăng nhập"}
             </Text>
             <Text style={styles.userRole}>
               {userInfo?.role?.toLowerCase() || ""}
@@ -115,53 +115,17 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.menuGrid}>
-          <MenuItem
-            title="Thời khóa biểu"
-            icon="calendar-outline"
-            onPress={() => router.push("/sign-in")}
-          />
-          <MenuItem
-            title="Kết quả học tập"
-            icon="school-outline"
-            onPress={() => router.push("/sign-up")}
-          />
-          <MenuItem
-            title="Quản lý lớp học"
-            icon="people-outline"
-            onPress={() => router.push("/class-management")}
-          />
-          <MenuItem
-            title="Điểm danh"
-            icon="checkmark-circle-outline"
-            onPress={() => {}}
-          />
-          <MenuItem title="Lịch thi" icon="time-outline" onPress={() => {}} />
-          <MenuItem
-            title="Đăng ký học phần"
-            icon="book-outline"
-            onPress={() => router.push("/register-for-class")}
-          />
-          <MenuItem
-            title="Danh sách lớp học"
-            icon="list-outline"
-            onPress={() => router.push("/classes")}
-          />
-          <MenuItem title="Học phí" icon="cash-outline" onPress={() => {}} />
-          <MenuItem
-            title="Thông báo"
-            icon="notifications-outline"
-            onPress={() => {}}
-          />
-          <MenuItem
-            title="Tài liệu"
-            icon="document-text-outline"
-            onPress={() => {}}
-          />
-          <MenuItem
-            title="Lịch công tác"
-            icon="briefcase-outline"
-            onPress={() => {}}
-          />
+          {userInfo &&
+            menuItems
+              .filter((item) => item.roles.includes(userInfo.role as never))
+              .map((item, index) => (
+                <MenuItem
+                  key={index}
+                  title={item.title}
+                  icon={item.icon}
+                  onPress={item.onPress}
+                />
+              ))}
         </View>
       </ScrollView>
     </SafeAreaView>
