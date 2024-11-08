@@ -101,10 +101,13 @@ export default function HomeScreen() {
       >
         {/* User Profile Section */}
         <View style={styles.profileSection}>
-          <Image
-            source={require("../../assets/images/react-logo.png")}
-            style={styles.avatar}
-          />
+          {userInfo?.avatar ? (
+            <Image source={{ uri: userInfo.avatar }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarText}>{userInfo?.ten?.[0] || "U"}</Text>
+            </View>
+          )}
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
               {userInfo?.ho + " " + userInfo?.ten || "Chưa đăng nhập"}
@@ -261,5 +264,19 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#CC0000",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  avatarText: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
   },
 });
