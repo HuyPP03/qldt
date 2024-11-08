@@ -110,10 +110,10 @@ export default function HomeScreen() {
           )}
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {userInfo?.ho + " " + userInfo?.ten || "Chưa đăng nhập"}
+              {userInfo?.ho + " " + userInfo?.ten}
             </Text>
             <Text style={styles.userEmail}>
-              {userInfo?.email?.toLowerCase() || ""}
+              {userInfo?.email?.toLowerCase() || userInfo?.role?.toLowerCase()}
             </Text>
             <Text style={styles.userDepartment}>Khoa Công nghệ thông tin</Text>
           </View>

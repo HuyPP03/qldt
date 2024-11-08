@@ -15,6 +15,7 @@ export interface UserInfo {
 }
 
 interface UserContextType {
+  token: string | null;
   userInfo: UserInfo | null;
   setUserInfo: (user: UserInfo | null) => void;
   loading: boolean;
@@ -26,6 +27,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -36,18 +38,26 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const loadUserInfo = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
+      setToken(token);
       if (token) {
-        const response = await request<{ data: UserInfo }>(
-          "http://160.30.168.228:8080/it4788/get_user_info",
-          {
-            method: "POST",
-            body: { token },
-          }
-        );
-        setUserInfo(response.data);
+        try {
+          const response = await request<{ data: UserInfo }>(
+            "http://160.30.168.228:8080/it4788/get_user_info",
+            {
+              method: "POST",
+              body: { token },
+            }
+          );
+          setUserInfo(response.data);
+        } catch (error) {
+          await AsyncStorage.removeItem("userToken");
+          setToken(null);
+          setUserInfo(null);
+          router.replace("/sign-up");
+        }
       }
     } catch (error) {
-      console.error("Lỗi khi lấy thông tin user:", error);
+      console.error("Lỗi khi đọc token:", error);
     } finally {
       setLoading(false);
     }
@@ -64,7 +74,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ userInfo, setUserInfo, loading, logout }}>
+    <UserContext.Provider
+      value={{ userInfo, setUserInfo, loading, logout, token }}
+    >
       {children}
     </UserContext.Provider>
   );

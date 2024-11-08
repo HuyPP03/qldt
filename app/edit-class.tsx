@@ -6,26 +6,278 @@ import {
   Text,
   TextInput,
   ScrollView,
+  Animated,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRoute } from "@react-navigation/native";
+import request from "../utility/request";
+import { useUser } from "./contexts/UserContext";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
-// Data fake cho form chỉnh sửa
-const fakeClassData = {
-  classCode: "INT1234",
-  subClassCode: "INT1234.1",
-  className: "Lập trình Web",
-  teacher: "Nguyễn Văn A",
-  classType: "LT",
-  startTime: "07:00",
-  endTime: "09:00",
-  dayOfWeek: "Thứ 2",
-  room: "305-A2",
-  maxStudents: "60",
-  note: "Lớp học phần lý thuyết",
+const Toast = ({ message }: { message: string }) => {
+  const translateY = new Animated.Value(100);
+
+  React.useEffect(() => {
+    // Animation hiện lên
+    Animated.spring(translateY, {
+      toValue: 0,
+      useNativeDriver: true,
+      speed: 12,
+      bounciness: 8,
+    }).start();
+
+    // Animation ẩn đi sau 3 giây
+    const timer = setTimeout(() => {
+      Animated.timing(translateY, {
+        toValue: 100,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }, 2700);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.toastContainer,
+        {
+          transform: [{ translateY }],
+        },
+      ]}
+    >
+      <Text style={styles.toastText}>{message}</Text>
+    </Animated.View>
+  );
 };
+
+export default function EditClass() {
+  const [classId, setClassId] = useState("");
+  const [className, setClassName] = useState("");
+  const [classType, setClassType] = useState("LT");
+  const [maxStudents, setMaxStudents] = useState("");
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const { token } = useUser();
+  const route = useRoute();
+  const { classId: routeClassId } = route.params as { classId: string };
+
+  useEffect(() => {
+    const fetchClassInfo = async () => {
+      try {
+        const response: any = await request(
+          "http://160.30.168.228:8080/it5023e/get_basic_class_info",
+          {
+            method: "POST",
+            body: {
+              token,
+              class_id: routeClassId,
+            },
+          }
+        );
+
+        setClassId(response.data.class_id);
+        setClassName(response.data.class_name);
+        setClassType(response.data.class_type);
+        setMaxStudents(response.data.max_student_amount.toString());
+        setStartDate(new Date(response.data.start_date));
+        setEndDate(new Date(response.data.end_date));
+      } catch (error) {
+        setErrorMessage("Tìm lớp không thành công. Vui lòng thử lại sau.");
+        setTimeout(() => setErrorMessage(""), 3000);
+      }
+    };
+
+    fetchClassInfo();
+  }, [routeClassId, token]);
+
+  const handleUpdateClass = async () => {
+    try {
+      const data = {
+        token,
+        class_id: classId,
+        class_name: className,
+        class_type: classType.replace("+", "_"),
+        max_student_amount: parseInt(maxStudents),
+        start_date: startDate.toISOString().split("T")[0],
+        end_date: endDate.toISOString().split("T")[0],
+      };
+
+      await request("http://160.30.168.228:8080/it5023e/edit_class", {
+        method: "POST",
+        body: data,
+      });
+
+      router.push("/class-management");
+    } catch (error) {
+      setErrorMessage("Cập nhật lớp không thành công. Vui lòng thử lại sau.");
+      setTimeout(() => setErrorMessage(""), 3000);
+    }
+  };
+
+  const handleDeleteClass = async () => {
+    try {
+      await request("http://160.30.168.228:8080/it5023e/delete_class", {
+        method: "POST",
+        body: {
+          token,
+          class_id: classId,
+        },
+      });
+
+      router.push("/class-management");
+    } catch (error) {
+      setErrorMessage("Xóa lớp không thành công. Vui lòng thử lại sau.");
+      setTimeout(() => setErrorMessage(""), 3000);
+    }
+  };
+
+  const dateInputSection = (
+    <View style={styles.timeContainer}>
+      <View style={styles.timePickerContainer}>
+        <Text style={styles.label}>Ngày bắt đầu:</Text>
+        <TouchableOpacity
+          style={styles.timeInput}
+          onPress={() => setShowStartPicker(true)}
+        >
+          <Text style={styles.inputText}>
+            {startDate.toISOString().split("T")[0]}
+          </Text>
+        </TouchableOpacity>
+        {showStartPicker && (
+          <View style={styles.datePickerWrapper}>
+            <DateTimePicker
+              value={startDate}
+              mode="date"
+              display="default"
+              onChange={(event, date) => {
+                setShowStartPicker(false);
+                if (date) setStartDate(date);
+              }}
+              themeVariant="light"
+              accentColor="#CC0000"
+            />
+          </View>
+        )}
+      </View>
+
+      <View style={styles.timePickerContainer}>
+        <Text style={styles.label}>Ngày kết thúc:</Text>
+        <TouchableOpacity
+          style={styles.timeInput}
+          onPress={() => setShowEndPicker(true)}
+        >
+          <Text style={styles.inputText}>
+            {endDate.toISOString().split("T")[0]}
+          </Text>
+        </TouchableOpacity>
+        {showEndPicker && (
+          <View style={styles.datePickerWrapper}>
+            <DateTimePicker
+              value={endDate}
+              mode="date"
+              display="default"
+              onChange={(event, date) => {
+                setShowEndPicker(false);
+                if (date) setEndDate(date);
+              }}
+              themeVariant="light"
+              accentColor="#CC0000"
+            />
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Chỉnh sửa lớp học</Text>
+      </View>
+
+      <ScrollView
+        style={styles.formContainer}
+        contentContainerStyle={{ paddingBottom: 50 }}
+      >
+        <TextInput
+          style={[styles.input, styles.inputText]}
+          placeholder="Mã lớp *"
+          placeholderTextColor="#CC0000"
+          value={classId}
+          onChangeText={setClassId}
+        />
+
+        <TextInput
+          style={[styles.input, styles.inputText]}
+          placeholder="Tên lớp *"
+          placeholderTextColor="#CC0000"
+          value={className}
+          onChangeText={setClassName}
+        />
+
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={classType}
+            style={[styles.picker, styles.pickerText]}
+            onValueChange={setClassType}
+          >
+            <Picker.Item label="Lý thuyết (LT)" value="LT" color="#CC0000" />
+            <Picker.Item label="Bài tập (BT)" value="BT" color="#CC0000" />
+            <Picker.Item
+              label="Lý thuyết + Bài tập (LT+BT)"
+              value="LT+BT"
+              color="#CC0000"
+            />
+          </Picker>
+        </View>
+
+        {dateInputSection}
+
+        <TextInput
+          style={[styles.input, styles.inputText]}
+          placeholder="Số lượng sinh viên tối đa *"
+          placeholderTextColor="#CC0000"
+          value={maxStudents}
+          onChangeText={setMaxStudents}
+          keyboardType="numeric"
+        />
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDeleteClass}
+          >
+            <Text style={styles.buttonText}>Xóa lớp</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleUpdateClass}
+          >
+            <Text style={styles.buttonText}>Xác nhận</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      {errorMessage ? <Toast message={errorMessage} /> : null}
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -82,16 +334,27 @@ const styles = StyleSheet.create({
     height: 50,
     color: "#CC0000",
   },
+  pickerText: {
+    color: "#CC0000",
+  },
   timeContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
     gap: 10,
   },
+  timePickerContainer: {
+    flex: 1,
+    position: "relative",
+  },
   timeLabel: {
     color: "#CC0000",
     marginRight: 8,
     fontSize: 16,
+  },
+  label: {
+    marginBottom: 4,
+    color: "#CC0000",
   },
   timeInput: {
     height: 50,
@@ -101,8 +364,16 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     paddingHorizontal: 12,
     backgroundColor: "white",
+    justifyContent: "center",
   },
-  // Style mới cho container chứa 2 button
+  datePickerWrapper: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
+    zIndex: 1000,
+  },
   buttonContainer: {
     flexDirection: "row",
     gap: 10,
@@ -128,196 +399,43 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  errorContainer: {
+    backgroundColor: "#ffebee",
+    padding: 10,
+    margin: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#CC0000",
+  },
+  errorText: {
+    color: "#CC0000",
+    textAlign: "center",
+    fontSize: 14,
+  },
+  toastContainer: {
+    position: "absolute",
+    bottom: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: "#ffebee",
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#CC0000",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  toastText: {
+    color: "#CC0000",
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "500",
+  },
 });
-
-export default function EditClass() {
-  // Khởi tạo state với data fake
-  const [classCode, setClassCode] = useState(fakeClassData.classCode);
-  const [subClassCode, setSubClassCode] = useState(fakeClassData.subClassCode);
-  const [className, setClassName] = useState(fakeClassData.className);
-  const [teacher, setTeacher] = useState(fakeClassData.teacher);
-  const [classType, setClassType] = useState(fakeClassData.classType);
-  const [startTime, setStartTime] = useState(fakeClassData.startTime);
-  const [endTime, setEndTime] = useState(fakeClassData.endTime);
-  const [dayOfWeek, setDayOfWeek] = useState(fakeClassData.dayOfWeek);
-  const [room, setRoom] = useState(fakeClassData.room);
-  const [maxStudents, setMaxStudents] = useState(fakeClassData.maxStudents);
-  const [note, setNote] = useState(fakeClassData.note);
-
-  const timeSlots = [
-    "07:00",
-    "07:30",
-    "08:00",
-    "08:30",
-    "09:00",
-    "09:30",
-    "10:00",
-    "10:30",
-    "11:00",
-    "11:30",
-    "12:00",
-    "12:30",
-    "13:00",
-    "13:30",
-    "14:00",
-    "14:30",
-    "15:00",
-    "15:30",
-    "16:00",
-    "16:30",
-    "17:00",
-  ];
-
-  const daysOfWeek = [
-    "Thứ 2",
-    "Thứ 3",
-    "Thứ 4",
-    "Thứ 5",
-    "Thứ 6",
-    "Thứ 7",
-    "Chủ nhật",
-  ];
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Chỉnh sửa lớp học</Text>
-      </View>
-
-      <ScrollView
-        style={styles.formContainer}
-        contentContainerStyle={{ paddingBottom: 50 }}
-      >
-        <TextInput
-          style={[styles.input, styles.inputText]}
-          placeholder="Mã lớp *"
-          placeholderTextColor="#CC0000"
-          value={classCode}
-          onChangeText={setClassCode}
-        />
-
-        <TextInput
-          style={[styles.input, styles.inputText]}
-          placeholder="Mã lớp kèm *"
-          placeholderTextColor="#CC0000"
-          value={subClassCode}
-          onChangeText={setSubClassCode}
-        />
-
-        <TextInput
-          style={[styles.input, styles.inputText]}
-          placeholder="Tên lớp *"
-          placeholderTextColor="#CC0000"
-          value={className}
-          onChangeText={setClassName}
-        />
-
-        <TextInput
-          style={[styles.input, styles.inputText]}
-          placeholder="Giảng viên *"
-          placeholderTextColor="#CC0000"
-          value={teacher}
-          onChangeText={setTeacher}
-        />
-
-        <View style={styles.pickerContainer}>
-          <Picker
-            style={styles.picker}
-            selectedValue={classType}
-            onValueChange={setClassType}
-          >
-            <Picker.Item label="Lý thuyết" value="LT" />
-            <Picker.Item label="Thực hành" value="TH" />
-          </Picker>
-        </View>
-
-        <View style={styles.pickerContainer}>
-          <Picker
-            style={styles.picker}
-            selectedValue={dayOfWeek}
-            onValueChange={setDayOfWeek}
-          >
-            {daysOfWeek.map((day) => (
-              <Picker.Item key={day} label={day} value={day} />
-            ))}
-          </Picker>
-        </View>
-
-        <View style={styles.timeContainer}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.timeLabel}>Giờ bắt đầu</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                style={styles.picker}
-                selectedValue={startTime}
-                onValueChange={setStartTime}
-              >
-                {timeSlots.map((time) => (
-                  <Picker.Item key={time} label={time} value={time} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-
-          <View style={{ flex: 1 }}>
-            <Text style={styles.timeLabel}>Giờ kết thúc</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                style={styles.picker}
-                selectedValue={endTime}
-                onValueChange={setEndTime}
-              >
-                {timeSlots.map((time) => (
-                  <Picker.Item key={time} label={time} value={time} />
-                ))}
-              </Picker>
-            </View>
-          </View>
-        </View>
-
-        <TextInput
-          style={[styles.input, styles.inputText]}
-          placeholder="Phòng học *"
-          placeholderTextColor="#CC0000"
-          value={room}
-          onChangeText={setRoom}
-        />
-
-        <TextInput
-          style={[styles.input, styles.inputText]}
-          placeholder="Số lượng sinh viên tối đa *"
-          placeholderTextColor="#CC0000"
-          value={maxStudents}
-          onChangeText={setMaxStudents}
-          keyboardType="numeric"
-        />
-
-        <TextInput
-          style={[styles.input, styles.inputText]}
-          placeholder="Ghi chú"
-          placeholderTextColor="#CC0000"
-          value={note}
-          onChangeText={setNote}
-          multiline
-          numberOfLines={3}
-        />
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.deleteButton}>
-            <Text style={styles.buttonText}>Xóa lớp</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.confirmButton}>
-            <Text style={styles.buttonText}>Xác nhận</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
