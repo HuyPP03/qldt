@@ -16,6 +16,7 @@ import { useRoute } from "@react-navigation/native";
 import request from "../utility/request";
 import { useUser } from "./contexts/UserContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { SERVER_URL } from "@env";
 
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(100);
@@ -74,7 +75,7 @@ export default function EditClass() {
     const fetchClassInfo = async () => {
       try {
         const response: any = await request(
-          "http://160.30.168.228:8080/it5023e/get_basic_class_info",
+          `${SERVER_URL}/it5023e/get_basic_class_info`,
           {
             method: "POST",
             body: {
@@ -111,7 +112,7 @@ export default function EditClass() {
         end_date: endDate.toISOString().split("T")[0],
       };
 
-      await request("http://160.30.168.228:8080/it5023e/edit_class", {
+      await request(`${SERVER_URL}/it5023e/edit_class`, {
         method: "POST",
         body: data,
       });
@@ -125,7 +126,7 @@ export default function EditClass() {
 
   const handleDeleteClass = async () => {
     try {
-      await request("http://160.30.168.228:8080/it5023e/delete_class", {
+      await request(`${SERVER_URL}/it5023e/delete_class`, {
         method: "POST",
         body: {
           token,

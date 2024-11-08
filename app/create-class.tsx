@@ -16,6 +16,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import request from "../utility/request";
 import { useUser } from "./contexts/UserContext";
 import React from "react";
+import { SERVER_URL } from "@env";
 
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(100);
@@ -216,7 +217,7 @@ export default function CreateClass() {
         max_student_amount: parseInt(maxStudents),
       };
 
-      await request("http://160.30.168.228:8080/it5023e/create_class", {
+      await request(`${SERVER_URL}/it5023e/create_class`, {
         method: "POST",
         body: data,
       });

@@ -16,6 +16,7 @@ import { useUser } from "./contexts/UserContext";
 import request from "../utility/request";
 import { useState } from "react";
 import React from "react";
+import { SERVER_URL } from "@env";
 
 const Toast = ({
   message,
@@ -79,7 +80,7 @@ const Loading = () => {
 };
 
 export default function RegisterForClass() {
-  const { userInfo, token } = useUser();
+  const { token } = useUser();
   const navigation = useNavigation();
   const [classes, setClasses] = useState<any[]>([]);
   const [classId, setClassId] = useState("");
@@ -125,15 +126,12 @@ export default function RegisterForClass() {
     try {
       setIsLoading(true);
 
-      const response = await request(
-        "http://160.30.168.228:8080/it5023e/register_class",
-        {
-          body: {
-            token,
-            class_ids: classes.map((c) => c.class_id),
-          },
-        }
-      );
+      const response = await request(`${SERVER_URL}/it5023e/register_class`, {
+        body: {
+          token,
+          class_ids: classes.map((c) => c.class_id),
+        },
+      });
 
       if (response) {
         setSuccessMessage("Đăng ký lớp thành công!");

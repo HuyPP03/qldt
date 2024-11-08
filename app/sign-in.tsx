@@ -14,6 +14,7 @@ import request from "@/utility/request";
 import { UserInfo, useUser } from "@/app/contexts/UserContext";
 import { useRouter } from "expo-router";
 import React from "react";
+import { SERVER_URL } from "@env";
 
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(-100);
@@ -64,13 +65,10 @@ export default function SignIn() {
 
   const handleSignIn = async () => {
     try {
-      const response = await request<any>(
-        "http://160.30.168.228:8080/it4788/login",
-        {
-          method: "POST",
-          body: { email, password, deviceId: 1 },
-        }
-      );
+      const response = await request<any>(`${SERVER_URL}/it4788/login`, {
+        method: "POST",
+        body: { email, password, deviceId: 1 },
+      });
 
       await AsyncStorage.setItem("userToken", response.token);
       setUserInfo(response);

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import request from "@/utility/request";
 import { useRouter } from "expo-router";
+import { SERVER_URL } from "@env";
 
 export interface UserInfo {
   id: string;
@@ -42,7 +43,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (token) {
         try {
           const response = await request<{ data: UserInfo }>(
-            "http://160.30.168.228:8080/it4788/get_user_info",
+            `${SERVER_URL}/it4788/get_user_info`,
             {
               method: "POST",
               body: { token },

@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import request from "../utility/request";
 import { useUser } from "./contexts/UserContext";
+import { SERVER_URL } from "@env";
 
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(100);
@@ -66,7 +67,7 @@ export default function ClassManagement() {
     try {
       const token = "";
       const response: any = await request(
-        "http://160.30.168.228:8080/it5023e/get_basic_class_info",
+        `${SERVER_URL}/it5023e/get_basic_class_info`,
         {
           body: {
             token: token,
