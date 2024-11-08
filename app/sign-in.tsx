@@ -8,17 +8,38 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import request from "@/utility/request";
+import { UserInfo, useUser } from "@/app/contexts/UserContext";
+import { useRouter } from "expo-router";
 
 export default function SignIn() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [email, setEmail] = useState("");
 
-  const handleSignIn = () => {
-    // Xử lý logic đăng nhập ở đây
-    console.log("Đăng nhập với:", username, password);
+  const router = useRouter();
+
+  const { setUserInfo } = useUser();
+
+  const handleSignIn = async () => {
+    try {
+      const response = await request<any>(
+        "http://160.30.168.228:8080/it4788/login",
+        {
+          method: "POST",
+          body: { email, password, deviceId: 1 },
+        }
+      );
+
+      await AsyncStorage.setItem("userToken", response.token);
+      setUserInfo(response);
+
+      router.replace("/");
+    } catch (error) {
+      console.error("Lỗi đăng nhập:", error);
+    }
   };
 
   return (
@@ -28,10 +49,10 @@ export default function SignIn() {
 
       <TextInput
         style={styles.input}
-        placeholder="Tên đăng nhập"
+        placeholder="Email"
         placeholderTextColor="white"
-        value={username}
-        onChangeText={setUsername}
+        value={email}
+        onChangeText={setEmail}
       />
 
       <View style={styles.passwordContainer}>
