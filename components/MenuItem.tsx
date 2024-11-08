@@ -74,6 +74,12 @@ export const menuItems = [
     onPress: () => {},
     roles: ["STUDENT", "LECTURER"] as const,
   },
+  {
+    title: "Lớp học",
+    icon: "library-outline" as const,
+    onPress: () => router.push("/classes"),
+    roles: ["STUDENT", "LECTURER"] as const,
+  },
   // Menu items chỉ dành cho Student
   {
     title: "Kết quả học tập",
