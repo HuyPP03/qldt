@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import request from "../utility/request"; 
 import { SERVER_URL } from "@env";
+import { useUser } from "./contexts/UserContext";
 
 interface ClassData {
   class_id: string;
@@ -66,17 +67,19 @@ const Toast = ({ message }: { message: string }) => {
 
 export default function ClassesScreen() {
   const router = useRouter();
-  const [classes, setClasses] = useState<ClassData[] | null>(null); // Store class list data
-  const [loading, setLoading] = useState<boolean>(true); // State to track loading
-  const [error, setError] = useState<string | null>(null); // Error state
+  const [classes, setClasses] = useState<ClassData[] | null>(null); 
+  const [loading, setLoading] = useState<boolean>(true); 
+  const [error, setError] = useState<string | null>(null); 
+
+  const { userInfo } = useUser();
+
+  const role = userInfo?.role;
+  const account_id = userInfo?.id;
 
   useEffect(() => {
     const loadClasses = async () => {
       try {
-        const token = await AsyncStorage.getItem("userToken");
-        console.log(token)
-        const role = "LECTURER";
-        const account_id = "24";
+        const token = await AsyncStorage.getItem("userToken")
 
         if (!token) {
           setError("Token is missing");
@@ -131,12 +134,13 @@ export default function ClassesScreen() {
                 id={item.class_id}
                 name={item.class_name}
                 status={item.status}
-                avatarUrl={item.attached_code || "../assets/images/graduation-caps.svg"}
+                avatarUrl={"../assets/images/graduation-caps.svg"}
               />
             </View>
           ))}
         </View>
       </ScrollView>
+      {error ? <Toast message={error} /> : null}
     </View>
   );
 }
