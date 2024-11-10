@@ -24,11 +24,24 @@ const ClassItem: React.FC<ClassItemProps> = ({
     });
   };
 
+  const statusText = (() => {
+    switch (status) {
+      case "ACTIVE":
+        return "Đang diễn ra";
+      case "UPCOMING":
+        return "Sắp diễn ra";
+      case "COMPLETED":
+        return "Đã kết thúc";
+      default:
+        return status;
+    }
+  })()
+
   return (
     <TouchableOpacity onPress={handlePress} style={styles.classItem}>
       <Image source={{ uri: avatarUrl }} style={styles.avatar} />
       <Text style={styles.className}>{name}</Text>
-      <Text style={styles.classStatus}>{status}</Text>
+      <Text style={styles.classStatus}>{statusText}</Text>
     </TouchableOpacity>
   );
 };
