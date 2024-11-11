@@ -15,13 +15,14 @@ import { useUser } from "../contexts/UserContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useRef, useEffect } from "react";
 import { Modal, Animated, Dimensions } from "react-native";
+import { ActivityIndicator } from "react-native-paper";
 
 export default function HomeScreen() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const slideAnim = useRef(
     new Animated.Value(Dimensions.get("window").width)
   ).current;
-  const { userInfo, logout } = useUser();
+  const { userInfo, logout, loading } = useUser();
 
   useEffect(() => {
     if (isDrawerOpen) {
@@ -38,6 +39,14 @@ export default function HomeScreen() {
       }).start();
     }
   }, [isDrawerOpen]);
+
+  if (true) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#ff0000" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -102,7 +111,7 @@ export default function HomeScreen() {
         {/* User Profile Section */}
         <View style={styles.profileSection}>
           {userInfo?.avatar ? (
-            <Image source={{ uri: userInfo.avatar }} style={styles.avatar} />
+            <Image source={{ uri: userInfo?.avatar }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarContainer}>
               <Text style={styles.avatarText}>{userInfo?.ten?.[0] || "U"}</Text>
@@ -122,7 +131,7 @@ export default function HomeScreen() {
         <View style={styles.menuGrid}>
           {userInfo &&
             menuItems
-              .filter((item) => item.roles.includes(userInfo.role as never))
+              .filter((item) => item.roles.includes(userInfo?.role as never))
               .map((item, index) => (
                 <MenuItem
                   key={index}
