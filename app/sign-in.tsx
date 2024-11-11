@@ -70,8 +70,8 @@ export default function SignIn() {
         body: { email, password, deviceId: 1 },
       });
 
-      await AsyncStorage.setItem("userToken", response.token);
-      setUserInfo(response);
+      await AsyncStorage.setItem("userToken", response.data.token);
+      setUserInfo(response.data);
 
       router.replace("/");
     } catch (error) {
