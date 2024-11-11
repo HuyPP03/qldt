@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { Text } from "react-native";
 import MenuItem, { menuItems } from "../../components/MenuItem";
-import { router } from "expo-router";
 import { useUser } from "../contexts/UserContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useRef, useEffect } from "react";
@@ -40,7 +39,7 @@ export default function HomeScreen() {
     }
   }, [isDrawerOpen]);
 
-  if (true) {
+  if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#ff0000" />
