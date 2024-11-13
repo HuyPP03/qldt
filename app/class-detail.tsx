@@ -7,10 +7,15 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import { useEffect } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import FileItem from "../components/FileItem";
+import SurveyItem from "../components/SurveyItem"; 
+import request from "../utility/request";
+import { SERVER_URL } from "@env";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ClassDetail() {
   const route = useRoute();
@@ -18,11 +23,59 @@ export default function ClassDetail() {
   const { id } = route.params as { id: string };
 
   const [activeTab, setActiveTab] = useState("Bài kiểm tra");
+  const [surveys, setSurveys] = useState<any[]>([]); 
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null); 
 
+  useEffect(() => {
+    const fetchSurveys = async () => {
+      const token = await AsyncStorage.getItem("userToken")
+
+      if (!token) {
+        setError("Token is missing");
+        return;
+      }
+
+      try {
+        const data = await request<any>(`${SERVER_URL}/it5023e/get_all_surveys`, {
+          method: "POST",
+          body: {
+            token: token, 
+            class_id: id,  
+          },
+        });
+
+        if (data.meta.code === 1000) {
+          setSurveys(data.data); 
+        } else {
+          console.error("Failed to fetch surveys", data.meta.message);
+        }
+      } catch (error) {
+        console.error("Error fetching surveys:", error);
+      } finally {
+        setLoading(false); 
+      }
+    };
+
+    fetchSurveys();
+  }, [id]);
+  
   const renderContent = () => {
     switch (activeTab) {
       case "Bài kiểm tra":
-        return <Text>Nội dung Bài kiểm tra</Text>;
+        return (
+          <ScrollView>
+          {surveys  
+            .map((survey, index) => (
+              <SurveyItem
+                key={survey.id}
+                surveyName={survey.title}
+                className={survey.class_id.toString()}
+                deadline={survey.deadline}
+              />
+            ))}
+        </ScrollView>
+        );
       case "Tệp":
         return (
           <View>

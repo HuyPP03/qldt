@@ -65,6 +65,7 @@ export default function SignIn() {
 
   const handleSignIn = async () => {
     try {
+      console.log(SERVER_URL)
       const response = await request<any>(`${SERVER_URL}/it4788/login`, {
         method: "POST",
         body: { email, password, deviceId: 1 },
@@ -75,6 +76,7 @@ export default function SignIn() {
 
       router.replace("/");
     } catch (error) {
+      console.log(error)
       setErrorMessage("Đăng nhập không thành công. Vui lòng thử lại.");
       setTimeout(() => setErrorMessage(""), 3000);
     }
