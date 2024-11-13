@@ -134,7 +134,6 @@ export default function ClassesScreen() {
                 id={item.class_id}
                 name={item.class_name}
                 status={item.status}
-                avatarUrl={"../assets/images/graduation-caps.svg"}
               />
             </View>
           ))}
