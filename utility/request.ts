@@ -38,14 +38,18 @@ async function request<T>(
     const response = await fetch(url, finalOptions);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json();
+      throw errorData;
     }
 
     const data = await response.json();
     return data as T;
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Request failed: ${error.message}`);
+      throw error;
+    }
+    if (error && typeof error === "object") {
+      throw error;
     }
     throw error;
   }

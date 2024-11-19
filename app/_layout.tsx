@@ -41,6 +41,8 @@ export default function RootLayout() {
         <Stack.Screen name="edit-class" options={{ headerShown: false }} />
         <Stack.Screen name="classes" options={{ headerShown: false }} />
         <Stack.Screen name="class-detail" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="chat" options={{ headerShown: false }} />
       </Stack>
     </UserProvider>
   );

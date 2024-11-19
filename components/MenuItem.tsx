@@ -63,12 +63,6 @@ export const menuItems = [
     roles: ["STUDENT", "LECTURER"] as const,
   },
   {
-    title: "Thông báo",
-    icon: "notifications-outline" as const,
-    onPress: () => {},
-    roles: ["STUDENT", "LECTURER"] as const,
-  },
-  {
     title: "Tài liệu",
     icon: "document-text-outline" as const,
     onPress: () => {},
