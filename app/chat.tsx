@@ -10,11 +10,95 @@ import {
   TextInput,
   KeyboardAvoidingView,
 } from "react-native";
+import { useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React from "react";
+import { Message, MessageResponse } from "./interfaces/chat/chat.interface";
+import request from "@/utility/request";
+import { SERVER_URL } from "@/utility/env";
+import { useUser } from "./contexts/UserContext";
+
+interface chatParams {
+  id: string;
+  partnerName: string;
+  partnerAvatar: string;
+}
 
 export default function Chat() {
+  const route = useRoute();
   const router = useRouter();
+  const {
+    id: conversationId,
+    partnerAvatar: avatar,
+    partnerName: name,
+  } = route.params as chatParams;
+
+  const [error, setError] = React.useState<string | null>(null);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const { userInfo } = useUser();
+
+  React.useEffect(() => {
+    const fetchMessages = async () => {
+      const token = await AsyncStorage.getItem("userToken");
+
+      if (!token) {
+        setError("Token is missing");
+        return;
+      }
+
+      try {
+        const res: MessageResponse = await request<any>(
+          `${SERVER_URL}/it5023e/get_conversation`,
+          {
+            method: "POST",
+            body: {
+              token: token,
+              index: 0,
+              count: 5,
+              conversation_id: conversationId,
+              mark_as_read: true,
+            },
+          }
+        );
+
+        if (res.meta.code === 1000) {
+          setMessages(res.data.conversation);
+        } else {
+          console.error("Failed to fetch conversations", res.meta.message);
+        }
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, [conversationId]);
+
+  const renderMessage = (message: Message) => {
+    const isSent = message.sender.id === userInfo?.id;
+
+    return (
+      <View
+        style={[styles.messageRow, isSent && styles.userMessageRow]}
+        key={message.message_id}
+      >
+        <View style={isSent ? styles.sentMessage : styles.receivedMessage}>
+          <Text
+            style={isSent ? styles.messageSendText : styles.messageReceiveText}
+          >
+            {message.message}
+          </Text>
+          <Text style={styles.messageTime}>{message.created_at}</Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -32,7 +116,7 @@ export default function Chat() {
             <Ionicons name="person" size={24} color="white" />
           </View>
           <View style={styles.userTextInfo}>
-            <Text style={styles.userName}>Nguyễn Văn A</Text>
+            <Text style={styles.userName}>{name}</Text>
             <View style={styles.onlineStatus}>
               <View style={styles.onlineDot} />
               <Text style={styles.statusText}>Đang hoạt động</Text>
@@ -42,21 +126,9 @@ export default function Chat() {
       </View>
       <View style={styles.chatContainer}>
         <ScrollView style={styles.messageList}>
-          <View style={styles.messageRow}>
-            <View style={styles.receivedMessage}>
-              <Text style={styles.messageText}>Xin chào bạn!</Text>
-              <Text style={styles.messageTime}>10:30</Text>
-            </View>
-          </View>
-
-          <View style={[styles.messageRow, styles.userMessageRow]}>
-            <View style={styles.sentMessage}>
-              <Text style={styles.messageText}>
-                Chào bạn, rất vui được gặp bạn!
-              </Text>
-              <Text style={styles.messageTime}>10:31</Text>
-            </View>
-          </View>
+          {loading && <Text>Loading...</Text>}
+          {!loading && messages?.length === 0 && <Text>No messages</Text>}
+          {!loading && messages?.length != 0 && messages?.map(renderMessage)}
         </ScrollView>
 
         <KeyboardAvoidingView
@@ -192,7 +264,12 @@ const styles = StyleSheet.create({
     shadowRadius: 1.0,
     elevation: 1,
   },
-  messageText: {
+  messageSendText: {
+    fontSize: 16,
+    color: "#fff",
+    lineHeight: 20,
+  },
+  messageReceiveText: {
     fontSize: 16,
     color: "#333",
     lineHeight: 20,

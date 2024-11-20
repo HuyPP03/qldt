@@ -11,59 +11,89 @@ import {
 } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
-
-interface ChatUser {
-  id: string;
-  name: string;
-  lastMessage: string;
-  timestamp: Date;
-  avatar: string;
-  unreadCount?: number;
-}
+import request from "@/utility/request";
+import { SERVER_URL } from "@/utility/env";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  ChatConversation,
+  ConversationResponse,
+} from "../interfaces/chat/chat.interface";
 
 export default function MessagesScreen() {
   const router = useRouter();
 
-  const [chatUsers, setChatUsers] = React.useState<ChatUser[]>([
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      lastMessage: "Hẹn gặp lại bạn nhé!",
-      timestamp: new Date(),
-      avatar: "👤",
-      unreadCount: 2,
-    },
-    {
-      id: "2",
-      name: "Trần Thị B",
-      lastMessage: "Ok, đã nhận được rồi",
-      timestamp: new Date(),
-      avatar: "👤",
-    },
-    // Thêm người dùng khác nếu cần
-  ]);
+  const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [conversations, setConversations] = React.useState<ChatConversation[]>(
+    []
+  );
 
-  const handleChatPress = (userId: string) => {
+  React.useEffect(() => {
+    const fetchConversations = async () => {
+      const token = await AsyncStorage.getItem("userToken");
+
+      if (!token) {
+        setError("Token is missing");
+        return;
+      }
+
+      try {
+        const res: ConversationResponse = await request<any>(
+          `${SERVER_URL}/it5023e/get_list_conversation`,
+          {
+            method: "POST",
+            body: {
+              token: token,
+              index: 0,
+              count: 2,
+            },
+          }
+        );
+
+        if (res.meta.code === 1000) {
+          setConversations(res.data.conversations);
+        } else {
+          console.error("Failed to fetch conversations", res.meta.message);
+        }
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchConversations();
+  }, []);
+
+  const handleChatPress = (
+    conversationId: string,
+    partner: { name: string; avatar: string }
+  ) => {
     router.push({
       pathname: "/chat",
-      params: { id: userId },
+      params: {
+        id: conversationId,
+        partnerName: partner.name,
+        partnerAvatar: partner.avatar,
+      },
     });
   };
 
-  const renderChatUser = ({ item }: { item: ChatUser }) => (
+  const renderChatUser = ({ item }: { item: ChatConversation }) => (
     <TouchableOpacity
       style={styles.userContainer}
-      onPress={() => handleChatPress(item.id)}
+      onPress={() => handleChatPress(item.id, item.partner)}
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
-        <Text style={styles.avatar}>{item.avatar}</Text>
+        <Text style={styles.avatar}>{item.partner.avatar}</Text>
       </View>
       <View style={styles.userInfo}>
         <View style={styles.userHeader}>
-          <Text style={styles.userName}>{item.name}</Text>
+          <Text style={styles.userName}>{item.partner.name}</Text>
           <Text style={styles.timestamp}>
-            {item.timestamp.toLocaleTimeString([], {
+            {new Date(
+              item.last_message?.created_at as string
+            ).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
@@ -71,13 +101,15 @@ export default function MessagesScreen() {
         </View>
         <View style={styles.messagePreview}>
           <Text numberOfLines={1} style={styles.lastMessage}>
-            {item.lastMessage}
+            {item.last_message?.message}
           </Text>
-          {item.unreadCount && (
+          {/* {item.last_message?.unread && (
             <View style={styles.unreadBadge}>
-              <Text style={styles.unreadCount}>{item.unreadCount}</Text>
+              <Text style={styles.unreadCount}>
+                {item.last_message?.unread}
+              </Text>
             </View>
-          )}
+          )} */}
         </View>
       </View>
     </TouchableOpacity>
@@ -107,7 +139,7 @@ export default function MessagesScreen() {
 
       <View style={styles.content}>
         <FlatList
-          data={chatUsers}
+          data={conversations}
           renderItem={renderChatUser}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.usersList}
