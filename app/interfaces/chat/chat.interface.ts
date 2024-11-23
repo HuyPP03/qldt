@@ -20,6 +20,11 @@ export interface Message {
   message_id?: string;
 }
 
+export enum messageStatus {
+  UNREAD,
+  READ,
+}
+
 export interface ConversationResponse extends BaseResponse {
   data: {
     conversations: ChatConversation[];
@@ -32,4 +37,21 @@ export interface MessageResponse extends BaseResponse {
     conversation: Message[];
     blocked: boolean;
   };
+}
+
+export interface SocketMessageResponse {
+  sender: Partner;
+  receiver?: Partner;
+  conversation_id: string;
+  content: string;
+  created_at: string;
+  message_status?: string;
+}
+
+export interface SendMessageRequest {
+  token: string;
+  sender: Partner;
+  receiver: Partner;
+  conversation_id: string;
+  content: string;
 }

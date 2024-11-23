@@ -5,3 +5,10 @@ export class BaseResponse {
     message: string;
   };
 }
+
+export interface UserAccount {
+  account_id: string;
+  last_name: string;
+  first_name: string;
+  email: string;
+}
