@@ -5,11 +5,11 @@ import { View, Text } from "react-native";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useMessageContext } from "../contexts/MessageContext";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-
-  const unreadMessages = 5;
+  const { unreadMessagesCount } = useMessageContext();
 
   return (
     <Tabs
@@ -56,7 +56,7 @@ export default function TabLayout() {
                 name={focused ? "chatbubbles" : "chatbubbles-outline"}
                 color={color}
               />
-              {unreadMessages > 0 && (
+              {unreadMessagesCount > 0 && (
                 <View
                   style={{
                     position: "absolute",
@@ -71,7 +71,7 @@ export default function TabLayout() {
                   }}
                 >
                   <Text style={{ color: "white", fontSize: 12 }}>
-                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
                   </Text>
                 </View>
               )}

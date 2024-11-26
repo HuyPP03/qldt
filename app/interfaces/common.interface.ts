@@ -1,3 +1,8 @@
+import {
+  SendMessageRequest,
+  SocketMessageResponse,
+} from "./chat/chat.interface";
+
 export class BaseResponse {
   data: Record<string, any>;
   meta: {
@@ -11,4 +16,15 @@ export interface UserAccount {
   last_name: string;
   first_name: string;
   email: string;
+}
+
+export interface SocketInterface {
+  isConnected: boolean;
+  addMessageListener: (
+    listener: (message: SocketMessageResponse) => void
+  ) => void;
+  removeMessageListener: (
+    listener: (message: SocketMessageResponse) => void
+  ) => void;
+  sendMessage: (message: SendMessageRequest) => void;
 }

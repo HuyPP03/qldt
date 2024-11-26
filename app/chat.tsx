@@ -29,6 +29,8 @@ import { useUser } from "./contexts/UserContext";
 import { useSocket } from "@/hooks/useSocket";
 import { v4 as uuidv4 } from "uuid";
 import { carbon } from "@/utility/carbon";
+import { useMessageContext } from "./contexts/MessageContext";
+import { HoldItem } from "react-native-hold-menu";
 
 interface chatParams {
   id: string;
@@ -52,6 +54,9 @@ export default function Chat() {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [newMessage, setNewMessage] = React.useState<string>("");
   const { userInfo } = useUser();
+  const {
+    socket: { sendMessage, addMessageListener, removeMessageListener },
+  } = useMessageContext();
 
   React.useEffect(() => {
     const fetchMessages = async () => {
@@ -113,11 +118,12 @@ export default function Chat() {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
   };
 
-  const sendMessage = useSocket(
-    userInfo?.id as string,
-    handleNewReceiveMessage,
-    handleNewSendMessage
-  );
+  React.useEffect(() => {
+    addMessageListener(handleNewReceiveMessage);
+    return () => {
+      removeMessageListener(handleNewReceiveMessage);
+    };
+  }, [addMessageListener, removeMessageListener]);
 
   const handleSendMessage = async () => {
     console.log("send message");
@@ -140,6 +146,7 @@ export default function Chat() {
         conversation_id: conversationId,
       };
       sendMessage(message);
+      handleNewSendMessage(message);
       setNewMessage("");
     }
   };
@@ -152,22 +159,47 @@ export default function Chat() {
     console.log("Delete message", messageId);
   };
 
+  const holdMenuItems = [
+    {
+      text: "Actions",
+      key: "title",
+      icon: "home",
+      isTitle: true,
+      onPress: () => {},
+    },
+    {
+      text: "Delete",
+      key: "delete",
+      icon: "trash",
+      isDestructive: true,
+      onPress: (messageId: string) => handleDeleteMessage(messageId),
+    },
+  ];
+
   const renderMessage = (message: Message) => {
     const isSent = message.sender.id === userInfo?.id;
 
     return (
-      <View style={[styles.messageRow, isSent && styles.userMessageRow]}>
-        <View style={isSent ? styles.sentMessage : styles.receivedMessage}>
-          <Text
-            style={isSent ? styles.messageSendText : styles.messageReceiveText}
-          >
-            {message.message}
-          </Text>
-          <Text style={styles.messageTime}>
-            {carbon.formatDate(message.created_at, "HH:mm DD/MM/YYYY")}
-          </Text>
+      <HoldItem
+        items={holdMenuItems}
+        actionParams={{ Delete: [message.message_id] }}
+        closeOnTap={true}
+      >
+        <View style={[styles.messageRow, isSent && styles.userMessageRow]}>
+          <View style={isSent ? styles.sentMessage : styles.receivedMessage}>
+            <Text
+              style={
+                isSent ? styles.messageSendText : styles.messageReceiveText
+              }
+            >
+              {message.message}
+            </Text>
+            <Text style={styles.messageTime}>
+              {carbon.formatDate(message.created_at, "HH:mm DD/MM/YYYY")}
+            </Text>
+          </View>
         </View>
-      </View>
+      </HoldItem>
     );
   };
 
@@ -216,11 +248,13 @@ export default function Chat() {
 
             <TextInput
               style={styles.input}
+              value={newMessage}
               onChange={(e) => setNewMessage(e.nativeEvent.text)}
               placeholder="Nhập tin nhắn..."
               placeholderTextColor="#666"
               multiline
             />
+            
 
             <TouchableOpacity
               style={styles.sendButton}

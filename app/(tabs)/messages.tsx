@@ -11,7 +11,7 @@ import {
   RefreshControl,
   Modal,
 } from "react-native";
-import React from "react";
+import React, { useContext } from "react";
 import { useRouter } from "expo-router";
 import request from "@/utility/request";
 import { SERVER_URL } from "@/utility/env";
@@ -22,6 +22,7 @@ import {
 } from "../interfaces/chat/chat.interface";
 import { Ionicons } from "@expo/vector-icons";
 import CreateChatModal from "../create-chat-modal";
+import { useMessageContext } from "../contexts/MessageContext";
 
 export default function MessagesScreen() {
   const router = useRouter();
@@ -29,43 +30,8 @@ export default function MessagesScreen() {
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [refreshing, setRefreshing] = React.useState<boolean>(false);
-  const [conversations, setConversations] = React.useState<ChatConversation[]>(
-    []
-  );
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
-
-  const fetchConversations = async () => {
-    const token = await AsyncStorage.getItem("userToken");
-
-    if (!token) {
-      setError("Token is missing");
-      return;
-    }
-
-    try {
-      const res: ConversationResponse = await request<any>(
-        `${SERVER_URL}/it5023e/get_list_conversation`,
-        {
-          method: "POST",
-          body: {
-            token: token,
-            index: 0,
-            count: 2,
-          },
-        }
-      );
-
-      if (res.meta.code === 1000) {
-        setConversations(res.data.conversations);
-      } else {
-        console.error("Failed to fetch conversations", res.meta.message);
-      }
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { conversations, fetchConversations } = useMessageContext();
 
   React.useEffect(() => {
     fetchConversations();
@@ -120,13 +86,13 @@ export default function MessagesScreen() {
           <Text numberOfLines={1} style={styles.lastMessage}>
             {item.last_message?.message}
           </Text>
-          {/* {item.last_message?.unread && (
+          {item.last_message?.unread ? (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadCount}>
                 {item.last_message?.unread}
               </Text>
             </View>
-          )} */}
+          ) : null}
         </View>
       </View>
     </TouchableOpacity>
