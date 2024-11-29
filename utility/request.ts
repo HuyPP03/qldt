@@ -31,16 +31,13 @@ async function request<T>(
       url = `${url}${url.includes("?") ? "&" : "?"}${queryParams}`;
     }
 
-    if (finalOptions.body) {
+    if (finalOptions.body instanceof FormData) {
+      delete finalOptions.headers["Content-Type"];
+    } else if (finalOptions.body) {
       finalOptions.body = JSON.stringify(finalOptions.body);
     }
 
     const response = await fetch(url, finalOptions);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw errorData;
-    }
 
     const data = await response.json();
     return data as T;
