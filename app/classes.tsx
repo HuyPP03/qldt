@@ -42,6 +42,17 @@ interface PageInfo {
   previous_page: string | null;
 }
 
+interface Response {
+  data: {
+    page_content: ClassData[];
+    page_info: PageInfo;
+  };
+  meta: {
+    code: string;
+    message: string;
+  };
+}
+
 export default function ClassesScreen() {
   const router = useRouter();
   const [classes, setClasses] = useState<ClassData[]>([]);
@@ -49,11 +60,18 @@ export default function ClassesScreen() {
   const [error, setError] = useState<string | null>(null);
   const [pageInfo, setPageInfo] = useState<PageInfo | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(0); 
-  const [pageSize] = useState<number>(5); 
+
   const slideAnim = useRef(new Animated.Value(300)).current;
   const [searchText, setSearchText] = useState<string>(""); 
   const [sortModalVisible, setSortModalVisible] = useState<boolean>(false);
   const [filteredClasses, setFilteredClasses] = useState<ClassData[]>([]); 
+
+  const [activeClasses, setActiveClasses] = useState<ClassData[]>([]);
+  const [upcomingClasses, setUpcomingClasses] = useState<ClassData[]>([]);
+  const [completedClasses, setCompletedClasses] = useState<ClassData[]>([]);
+  const [selectedTab, setSelectedTab] = useState<string>("active");
+
+  const [pageSize] = useState<number>(1000); 
 
   const { userInfo } = useUser();
   const role = userInfo?.role;
@@ -69,7 +87,7 @@ export default function ClassesScreen() {
         return;
       }
   
-      const data = await request<any>(
+      const data = await request<Response>(
         `${SERVER_URL}/it5023e/get_class_list`,
         {
           method: "POST",
@@ -86,9 +104,34 @@ export default function ClassesScreen() {
       );
 
       if (data.meta.code === "1000") {
+
+        const active: ClassData[] = [];
+        const upcoming: ClassData[] = [];
+        const completed: ClassData[] = [];
+        
+
+
+        data.data.page_content.forEach((item) => {
+          switch (item.status) {
+            case "ACTIVE":
+              active.push(item);
+              break;
+            case "UPCOMING":
+              upcoming.push(item);
+              break;
+            case "COMPLETED":
+              completed.push(item);
+              break;
+            default:
+              break;
+          }
+        });
+        
+        setActiveClasses(active);
+        setUpcomingClasses(upcoming);
+        setCompletedClasses(completed);
         setClasses(data.data.page_content);
         setPageInfo(data.data.page_info);
-  
         setError(null);
       } else {
         setError("Error fetching class list");
@@ -121,6 +164,14 @@ export default function ClassesScreen() {
     loadClasses(currentPage);
   }, [currentPage]);
 
+  useEffect(() => {
+    const selectedClasses = getClassesForSelectedTab();
+  
+    if (selectedClasses) {
+      setFilteredClasses(selectedClasses);
+    }
+  }, [classes, selectedTab]);
+
   const handleNextPage = () => {
     if (pageInfo && pageInfo.next_page) {
       setCurrentPage(currentPage + 1);
@@ -134,16 +185,18 @@ export default function ClassesScreen() {
   };
 
   useEffect(() => {
-    if (searchText) {
+    const selectedClasses = getClassesForSelectedTab();
+  
+    if (searchText.length >= 4) {
       setFilteredClasses(
-        classes.filter((c) =>
+        selectedClasses.filter((c) =>
           c.class_name.toLowerCase().includes(searchText.toLowerCase())
         )
       );
     } else {
-      setFilteredClasses(classes); 
+      setFilteredClasses(selectedClasses); 
     }
-  }, [searchText, classes]);
+  }, [searchText, selectedTab]);
 
   const handleSort = (option: string) => {
     let sortedClasses = [...filteredClasses];
@@ -169,17 +222,52 @@ export default function ClassesScreen() {
     setSortModalVisible(false); 
   };
 
+  const getClassesForSelectedTab = () => {
+    switch (selectedTab) {
+      case "active":
+        return activeClasses;
+      case "upcoming":
+        return upcomingClasses;
+      case "completed":
+        return completedClasses;
+      default:
+        return [];
+    }
+  };
+  
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.push("/")}
+     <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+           onPress={() => router.push("/")}
+          >
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Danh sách lớp học</Text>
+        </View>
+
+        <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tabButton, selectedTab === "active" && styles.selectedTab]}
+          onPress={() => setSelectedTab("active")}
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Text style={styles.tabText}>Đang diễn ra</Text>
         </TouchableOpacity>
-        <Text style={styles.headerText}>Danh sách lớp học</Text>
+        <TouchableOpacity 
+        style={[styles.tabButton, selectedTab === "upcoming" && styles.selectedTab]}
+        onPress={() => setSelectedTab("upcoming")}
+        >
+          <Text style={styles.tabText}>Sắp diễn ra</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+        style={[styles.tabButton, selectedTab === "completed" && styles.selectedTab]}
+        onPress={() => setSelectedTab("completed")}
+        >
+          <Text style={styles.tabText}>Đã kết thúc</Text>
+        </TouchableOpacity>
       </View>
+
       {!loading && (
       <View>
       <View style={styles.searchSortContainer}>
@@ -187,7 +275,8 @@ export default function ClassesScreen() {
               style={styles.searchInput}
               placeholder="Tìm kiếm lớp học..."
               value={searchText}
-              onChangeText={setSearchText} />
+              onChangeText={setSearchText} 
+              />
 
             <TouchableOpacity onPress={openModal}>
               <Ionicons name="filter" size={24} color="black" />
@@ -237,20 +326,20 @@ export default function ClassesScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.listContainer}>
-          <View style={styles.gridContainer}>
-            {filteredClasses.map((item) => (
-              <View key={item.class_id} style={styles.classItemContainer}>
-                <ClassItem
-                  id={item.class_id}
-                  name={item.class_name}
-                  status={item.status}
-                  lecturerName={item.lecturer_name}
-                />
+        <View style={styles.gridContainer}>
+          {filteredClasses.map((item) => (
+            <View key={item.class_id} style={styles.classItemContainer}>
+              <ClassItem
+                id={item.class_id}
+                name={item.class_name}
+                status={item.status}
+                lecturerName={item.lecturer_name}
+              />
               </View>
             ))}
           </View>
           
-          <View style={styles.paginationContainer}>
+          {/*<View style={styles.paginationContainer}>
             {pageInfo && (
               <View style={styles.pagination}>
                 <TouchableOpacity
@@ -278,7 +367,7 @@ export default function ClassesScreen() {
                 </TouchableOpacity>
               </View>
             )}
-          </View>
+          </View>*/}
         </ScrollView>
       )}
 
@@ -397,12 +486,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginRight: 10,
   },
-  picker: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
   searchSortContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -417,6 +500,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginRight: 10,
+    color: "#666",
   },
   modalOverlay: {
     flex: 1,
@@ -453,5 +537,24 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  tabContainer: {
+    flexDirection: "row",
+    marginTop: 10,
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+  },
+  tabButton: {
+    padding: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+  selectedTab: {
+    borderBottomColor: "#CC0000", 
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
   },
 });

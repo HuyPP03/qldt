@@ -228,6 +228,8 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
   },
   addButtonContainer: {
     alignItems: "flex-end",
