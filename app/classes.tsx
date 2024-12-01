@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   TextInput,
   Modal,
   Pressable,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ClassItem from "../components/ClassItem";
@@ -49,13 +50,12 @@ export default function ClassesScreen() {
   const [pageInfo, setPageInfo] = useState<PageInfo | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(0); 
   const [pageSize] = useState<number>(5); 
-  const [sortBy, setSortBy] = useState<string>("name");
+  const slideAnim = useRef(new Animated.Value(300)).current;
   const [searchText, setSearchText] = useState<string>(""); 
   const [sortModalVisible, setSortModalVisible] = useState<boolean>(false);
   const [filteredClasses, setFilteredClasses] = useState<ClassData[]>([]); 
 
   const { userInfo } = useUser();
-
   const role = userInfo?.role;
   const account_id = userInfo?.id;
 
@@ -98,6 +98,23 @@ export default function ClassesScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openModal = () => {
+    setSortModalVisible(true);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeModal = () => {
+    Animated.timing(slideAnim, {
+      toValue: 300,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setSortModalVisible(false));
   };
 
   useEffect(() => {
@@ -172,18 +189,21 @@ export default function ClassesScreen() {
               value={searchText}
               onChangeText={setSearchText} />
 
-            <TouchableOpacity onPress={() => setSortModalVisible(true)}>
+            <TouchableOpacity onPress={openModal}>
               <Ionicons name="filter" size={24} color="black" />
             </TouchableOpacity>
           </View>
           <Modal
             visible={sortModalVisible}
             transparent={true}
-            animationType="slide"
-            onRequestClose={() => setSortModalVisible(false)}
+            animationType="none"
+            onRequestClose={closeModal}
           >
               <View style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
+                <Animated.View style={[
+                  styles.modalContainer,
+                  { transform: [{ translateY: slideAnim }] },
+                ]}>
                   <Text style={styles.modalTitle}>Sắp xếp</Text>
                   <Pressable onPress={() => handleSort("name_asc")} style={styles.modalOption}>
                     <Text>Tên (A-Z)</Text>
@@ -197,13 +217,10 @@ export default function ClassesScreen() {
                   <Pressable onPress={() => handleSort("oldest")} style={styles.modalOption}>
                     <Text>Cũ nhất</Text>
                   </Pressable>
-                  <Pressable
-                    onPress={() => setSortModalVisible(false)}
-                    style={[styles.modalOption, styles.closeButton]}
-                  >
-                    <Text style={styles.closeButtonText}>Đóng</Text>
-                  </Pressable>
-                </View>
+                  <TouchableOpacity onPress={closeModal}>
+                    <Text style={styles.closeButton}>Đóng</Text>
+                  </TouchableOpacity>
+                </Animated.View>
               </View>
             </Modal>
         </View>
@@ -403,21 +420,24 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    height: "100%",
   },
   modalContainer: {
     backgroundColor: "white",
     padding: 20,
-    borderRadius: 10,
-    width: "80%",
-    alignItems: "center",
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    width: "100%",
+    position: "absolute",
+    bottom: 0,
   },
   modalTitle: {
     fontSize: 18,
+    marginBottom: 10,
+    textAlign: "center",
     fontWeight: "bold",
-    marginBottom: 20,
   },
   modalOption: {
     padding: 10,
@@ -427,9 +447,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeButton: {
-    backgroundColor: "#CC0000",
-    marginTop: 10,
-    borderRadius: 5,
+    color: "blue",
+    textAlign: "right",
   },
   closeButtonText: {
     color: "white",
