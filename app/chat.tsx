@@ -6,15 +6,16 @@ import {
   StatusBar,
   Platform,
   TouchableOpacity,
-  ScrollView,
   TextInput,
   KeyboardAvoidingView,
+  FlatList,
+  ListRenderItem,
 } from "react-native";
 import { useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React from "react";
+import React, { useRef } from "react";
 import {
   Message,
   MessageResponse,
@@ -26,14 +27,11 @@ import {
 import request from "@/utility/request";
 import { SERVER_URL } from "@/utility/env";
 import { useUser } from "./contexts/UserContext";
-import { useSocket } from "@/hooks/useSocket";
-import { v4 as uuidv4 } from "uuid";
 import { carbon } from "@/utility/carbon";
 import { useMessageContext } from "./contexts/MessageContext";
-import { HoldItem } from "react-native-hold-menu";
 
 interface chatParams {
-  id: string;
+  id?: string;
   partnerId: string;
   partnerName: string;
   partnerAvatar: string;
@@ -52,14 +50,16 @@ export default function Chat() {
   const [error, setError] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
+  const [messageChange, setMessageChange] = React.useState<boolean>(false);
   const [newMessage, setNewMessage] = React.useState<string>("");
   const { userInfo } = useUser();
   const {
     socket: { sendMessage, addMessageListener, removeMessageListener },
   } = useMessageContext();
+  const flatListRef = useRef<FlatList>(null);
 
   React.useEffect(() => {
-    const fetchMessages = async () => {
+    const fetchMessages = async (count: number) => {
       const token = await AsyncStorage.getItem("userToken");
 
       if (!token) {
@@ -75,14 +75,14 @@ export default function Chat() {
             body: {
               token: token,
               index: 0,
-              count: 5,
+              count: count,
               conversation_id: conversationId,
               mark_as_read: true,
             },
           }
         );
 
-        if (res.meta.code === 1000) {
+        if (res.meta.code === "1000") {
           setMessages(res.data.conversation.reverse());
         } else {
           console.error("Failed to fetch conversations", res.meta.message);
@@ -94,8 +94,21 @@ export default function Chat() {
       }
     };
 
-    fetchMessages();
-  }, [conversationId]);
+    fetchMessages(200);
+    scrollToBottomNoAnimation();
+  }, [conversationId, messageChange]);
+
+  const scrollToBottom = () => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  };
+
+  const scrollToBottomNoAnimation = () => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: false });
+    }
+  };
 
   const handleNewReceiveMessage = (message: SocketMessageResponse) => {
     const receivedMessage: Message = {
@@ -103,8 +116,12 @@ export default function Chat() {
       message: message.content,
       created_at: message.created_at,
       unread: messageStatus.UNREAD,
+      message_id: message.id.toString(),
     };
-    setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+    // if (message.sender.id != userInfo?.id) {
+    //   setMessages((prevMessages) => [...prevMessages, receivedMessage]);
+    // }
+    setMessageChange(!messageChange);
   };
 
   const handleNewSendMessage = (message: SendMessageRequest) => {
@@ -113,9 +130,22 @@ export default function Chat() {
       message: message.content,
       created_at: new Date().toISOString(),
       unread: messageStatus.READ,
-      message_id: uuidv4(),
+      message_id: getRandomString(10),
     };
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    // setMessages((prevMessages) => [...prevMessages, newMessage]);
+    setMessageChange(!messageChange);
+  };
+
+  const getRandomString = (length: number) => {
+    const characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(
+        Math.floor(Math.random() * characters.length)
+      );
+    }
+    return result;
   };
 
   React.useEffect(() => {
@@ -126,24 +156,18 @@ export default function Chat() {
   }, [addMessageListener, removeMessageListener]);
 
   const handleSendMessage = async () => {
-    console.log("send message");
-
     if (sendMessage && newMessage.trim()) {
       const token = await AsyncStorage.getItem("userToken");
       const message: SendMessageRequest = {
         token: token as string,
-        sender: {
-          id: userInfo?.id as string,
-          name: userInfo?.name as string,
-          avatar: userInfo?.avatar as string,
-        },
+        sender: userInfo?.email,
         receiver: {
-          id: partnerId,
+          id: Number(partnerId),
           name,
           avatar,
         },
         content: newMessage,
-        conversation_id: conversationId,
+        // conversation_id: conversationId,
       };
       sendMessage(message);
       handleNewSendMessage(message);
@@ -159,47 +183,25 @@ export default function Chat() {
     console.log("Delete message", messageId);
   };
 
-  const holdMenuItems = [
-    {
-      text: "Actions",
-      key: "title",
-      icon: "home",
-      isTitle: true,
-      onPress: () => {},
-    },
-    {
-      text: "Delete",
-      key: "delete",
-      icon: "trash",
-      isDestructive: true,
-      onPress: (messageId: string) => handleDeleteMessage(messageId),
-    },
-  ];
-
-  const renderMessage = (message: Message) => {
-    const isSent = message.sender.id === userInfo?.id;
+  const renderMessage: ListRenderItem<Message> = ({ item }) => {
+    const isSent = item.sender.id == userInfo?.id;
 
     return (
-      <HoldItem
-        items={holdMenuItems}
-        actionParams={{ Delete: [message.message_id] }}
-        closeOnTap={true}
+      <View
+        style={[styles.messageRow, isSent && styles.userMessageRow]}
+        key={item.message_id}
       >
-        <View style={[styles.messageRow, isSent && styles.userMessageRow]}>
-          <View style={isSent ? styles.sentMessage : styles.receivedMessage}>
-            <Text
-              style={
-                isSent ? styles.messageSendText : styles.messageReceiveText
-              }
-            >
-              {message.message}
-            </Text>
-            <Text style={styles.messageTime}>
-              {carbon.formatDate(message.created_at, "HH:mm DD/MM/YYYY")}
-            </Text>
-          </View>
+        <View style={isSent ? styles.sentMessage : styles.receivedMessage}>
+          <Text
+            style={isSent ? styles.messageSendText : styles.messageReceiveText}
+          >
+            {item.message}
+          </Text>
+          <Text style={styles.messageTime}>
+            {carbon.formatDate(item.created_at, "HH:mm DD/MM/YYYY")}
+          </Text>
         </View>
-      </HoldItem>
+      </View>
     );
   };
 
@@ -229,13 +231,18 @@ export default function Chat() {
         </View>
       </View>
       <View style={styles.chatContainer}>
-        <ScrollView style={styles.messageList}>
-          {loading && <Text>Loading...</Text>}
-          {!loading && messages?.length === 0 && <Text>No messages</Text>}
-          {!loading && messages?.length != 0
-            ? messages?.map(renderMessage)
-            : null}
-        </ScrollView>
+        {loading && <Text>Loading...</Text>}
+        {!loading ? (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            style={styles.messageList}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.message_id || getRandomString(10)}
+            onContentSizeChange={scrollToBottom}
+            onLayout={scrollToBottom}
+          />
+        ) : null}
 
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -254,7 +261,6 @@ export default function Chat() {
               placeholderTextColor="#666"
               multiline
             />
-            
 
             <TouchableOpacity
               style={styles.sendButton}
@@ -338,9 +344,10 @@ const styles = StyleSheet.create({
   messageList: {
     flex: 1,
     padding: 15,
+    marginVertical: 15,
   },
   messageRow: {
-    marginBottom: 10,
+    marginBottom: 15,
     flexDirection: "row",
   },
   userMessageRow: {

@@ -11,15 +11,9 @@ import {
   RefreshControl,
   Modal,
 } from "react-native";
-import React, { useContext } from "react";
+import React from "react";
 import { useRouter } from "expo-router";
-import request from "@/utility/request";
-import { SERVER_URL } from "@/utility/env";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  ChatConversation,
-  ConversationResponse,
-} from "../interfaces/chat/chat.interface";
+import { ChatConversation } from "../interfaces/chat/chat.interface";
 import { Ionicons } from "@expo/vector-icons";
 import CreateChatModal from "../create-chat-modal";
 import { useMessageContext } from "../contexts/MessageContext";
@@ -34,8 +28,9 @@ export default function MessagesScreen() {
   const { conversations, fetchConversations } = useMessageContext();
 
   React.useEffect(() => {
-    fetchConversations();
-  }, []);
+    setLoading(true);
+    setLoading(false);
+  }, [conversations]);
 
   const onRefresh = React.useCallback(() => {
     console.log("Refreshing...");
@@ -98,12 +93,6 @@ export default function MessagesScreen() {
     </TouchableOpacity>
   );
 
-  const renderContact = ({ item }: { item: any }) => (
-    <TouchableOpacity style={styles.contactContainer}>
-      <Text style={styles.contactName}>{item.name}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -150,10 +139,6 @@ export default function MessagesScreen() {
       <CreateChatModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        contacts={[
-          { account_id: "1", first_name: "John", last_name: "Doe", email: "" },
-          { account_id: "2", first_name: "Jane", last_name: "Doe", email: "" },
-        ]} // Replace with your contacts data
       />
     </SafeAreaView>
   );

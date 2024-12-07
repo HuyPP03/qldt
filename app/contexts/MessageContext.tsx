@@ -56,7 +56,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({
         }
       );
 
-      if (res.meta.code === 1000) {
+      if (res.meta.code === "1000") {
         setUnreadMessagesCount(Number(res.data.num_new_message));
         setConversations(res.data.conversations);
       } else {
@@ -70,7 +70,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({
     }
   };
 
-  const socketInit: SocketInterface = useSocket(userInfo?.id || "");
+  const socketInit: SocketInterface = useSocket(userInfo?.id || "", fetchConversations);
   useEffect(() => {
     fetchConversations();
     setSocket(socketInit);

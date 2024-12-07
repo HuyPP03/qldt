@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -7,28 +7,76 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  GestureResponderEvent,
 } from "react-native";
 import { UserAccount } from "./interfaces/common.interface";
 import {
   GestureHandlerRootView,
   PanGestureHandler,
 } from "react-native-gesture-handler";
+import request from "@/utility/request";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SERVER_URL } from "@/utility/env";
+import { useRouter } from "expo-router";
 
 interface CreateChatModalProps {
   visible: boolean;
   onClose: () => void;
-  contacts: UserAccount[];
 }
 
 const CreateChatModal: React.FC<CreateChatModalProps> = ({
   visible,
   onClose,
-  contacts,
 }) => {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [contacts, setContacts] = React.useState<UserAccount[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      setLoading(true);
+      try {
+        const res = await request<any>(`${SERVER_URL}/it5023e/search_account`, {
+          method: "POST",
+          body: {
+            search: searchTerm,
+          },
+        });
+
+        if (res.meta.code === "1000") {
+          setContacts(res.data.page_content.reverse());
+        } else {
+          console.error("Failed to fetch conversations", res.meta.message);
+        }
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContacts();
+  }, [searchTerm]);
+
+  const handleContactPress = (contact: UserAccount) => {
+    onClose();
+    router.push({
+      pathname: "/chat",
+      params: {
+        partnerId: contact.account_id,
+        partnerName: contact.first_name + " " + contact.last_name,
+        partnerAvatar: "",
+      },
+    });
+    console.log("Contact pressed", contact);
+  };
 
   const renderContact = ({ item }: { item: UserAccount }) => (
-    <TouchableOpacity style={styles.contactContainer}>
+    <TouchableOpacity
+      style={styles.contactContainer}
+      onPress={() => handleContactPress(item)}
+    >
       <Text style={styles.contactName}>
         {item.first_name + " " + item.last_name}
       </Text>

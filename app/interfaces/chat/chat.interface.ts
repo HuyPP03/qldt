@@ -7,7 +7,7 @@ export interface ChatConversation {
 }
 
 export interface Partner {
-  id: string;
+  id: any;
   name: string;
   avatar: string;
 }
@@ -40,7 +40,8 @@ export interface MessageResponse extends BaseResponse {
 }
 
 export interface SocketMessageResponse {
-  sender: Partner;
+  sender: any;
+  id: number;
   receiver?: Partner;
   conversation_id: string;
   content: string;
@@ -50,8 +51,8 @@ export interface SocketMessageResponse {
 
 export interface SendMessageRequest {
   token: string;
-  sender: Partner;
+  sender: any;
   receiver: Partner;
-  conversation_id: string;
+  conversation_id?: string;
   content: string;
 }

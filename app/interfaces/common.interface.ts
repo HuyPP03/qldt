@@ -6,7 +6,7 @@ import {
 export class BaseResponse {
   data: Record<string, any>;
   meta: {
-    code: number;
+    code: string;
     message: string;
   };
 }

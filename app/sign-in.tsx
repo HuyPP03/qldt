@@ -67,8 +67,10 @@ export default function SignIn() {
     try {
       const response = await request<any>(`${SERVER_URL}/it4788/login`, {
         method: "POST",
-        body: { email, password, deviceId: 1 },
+        body: { email, password, device_id: "1" },
       });
+
+      console.log(response);
 
       await AsyncStorage.setItem("userToken", response.data.token);
       setUserInfo(response.data);
