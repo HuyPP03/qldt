@@ -67,7 +67,7 @@ export default function SignIn() {
     try {
       const response = await request<any>(`${SERVER_URL}/it4788/login`, {
         method: "POST",
-        body: { email, password, deviceId: 1 },
+        body: { email, password, device_id: 1 },
       });
 
       await AsyncStorage.setItem("userToken", response.data.token);
@@ -75,7 +75,7 @@ export default function SignIn() {
 
       router.replace("/");
     } catch (error) {
-      console.log(error);
+      console.error(error);
       setErrorMessage("Đăng nhập không thành công. Vui lòng thử lại.");
       setTimeout(() => setErrorMessage(""), 3000);
     }

@@ -13,13 +13,13 @@ import { router } from "expo-router";
 import { useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import request from "../utility/request";
-import { useUser } from "./contexts/UserContext";
 import React from "react";
 import { SERVER_URL } from "@env";
 import {
   CreateAbsentRequest,
   CreateAbsentResponse,
 } from "./interfaces/absent/absent.interface";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import DocumentPicker from "react-native-document-picker";
 
 const Toast = ({ message }: { message: string }) => {
@@ -69,12 +69,11 @@ export default function CreateAbsent() {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const { token } = useUser();
-
   const handleCreateAbsent = async () => {
+    const token = await AsyncStorage.getItem("userToken");
     try {
       const data: CreateAbsentRequest = {
-        token: token ?? "YkjCVV",
+        token: token as string,
         classId,
         date: date.toISOString().split("T")[0],
         reason,
