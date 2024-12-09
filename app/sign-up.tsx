@@ -12,7 +12,7 @@ import { Link } from "expo-router";
 import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
 import { Alert } from "react-native";
-import { SERVER_URL } from "@env";
+import { SERVER_URL } from "@/utility/env";
 import request from "@/utility/request";
 
 export default function SignUp() {

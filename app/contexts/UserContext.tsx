@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import request from "@/utility/request";
 import { useRouter } from "expo-router";
-import { SERVER_URL } from "@env";
+import { SERVER_URL } from "@/utility/env";
 
 export interface UserInfo {
   id: string;

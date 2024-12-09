@@ -17,9 +17,9 @@ import ClassItem from "../components/ClassItem";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import request from "../utility/request";
-import { SERVER_URL } from "@env";
+import { SERVER_URL } from "@/utility/env";
 import { useUser } from "./contexts/UserContext";
-import Toast from "@/components/Toast";
+import { Toast } from "@/components/Toast";
 import { globalStyles } from "@/styles/globalStyles";
 
 interface ClassData {
@@ -84,6 +84,7 @@ export default function ClassesScreen() {
     setError(null); 
     try {
       const token = await AsyncStorage.getItem("userToken");
+      console.log(token)
       if (!token) {
         setError("Token is missing");
         return;
