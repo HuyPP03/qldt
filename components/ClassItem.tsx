@@ -20,7 +20,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   const handlePress = () => {
     router.push({
       pathname: "/class-detail",
-      params: { id },
+      params: { id, name },
     });
   };
 

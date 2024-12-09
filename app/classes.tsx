@@ -20,6 +20,7 @@ import request from "../utility/request";
 import { SERVER_URL } from "@env";
 import { useUser } from "./contexts/UserContext";
 import Toast from "@/components/Toast";
+import { globalStyles } from "@/styles/globalStyles";
 
 interface ClassData {
   class_id: string;
@@ -76,6 +77,7 @@ export default function ClassesScreen() {
   const { userInfo } = useUser();
   const role = userInfo?.role;
   const account_id = userInfo?.id;
+  console.log(account_id);
 
   const loadClasses = async (page: number) => {
     setLoading(true);
@@ -187,7 +189,7 @@ export default function ClassesScreen() {
   useEffect(() => {
     const selectedClasses = getClassesForSelectedTab();
   
-    if (searchText.length >= 4) {
+    if (searchText.length >= 3) {
       setFilteredClasses(
         selectedClasses.filter((c) =>
           c.class_name.toLowerCase().includes(searchText.toLowerCase())
@@ -270,7 +272,7 @@ export default function ClassesScreen() {
 
       {!loading && (
       <View>
-      <View style={styles.searchSortContainer}>
+          <View style={styles.searchSortContainer}>
             <TextInput
               style={styles.searchInput}
               placeholder="Tìm kiếm lớp học..."
@@ -288,38 +290,40 @@ export default function ClassesScreen() {
             animationType="none"
             onRequestClose={closeModal}
           >
-              <View style={styles.modalOverlay}>
-                <Animated.View style={[
-                  styles.modalContainer,
-                  { transform: [{ translateY: slideAnim }] },
-                ]}>
-                  <Text style={styles.modalTitle}>Sắp xếp</Text>
-                  <Pressable onPress={() => handleSort("name_asc")} style={styles.modalOption}>
-                    <Text>Tên (A-Z)</Text>
-                  </Pressable>
-                  <Pressable onPress={() => handleSort("name_desc")} style={styles.modalOption}>
-                    <Text>Tên (Z-A)</Text>
-                  </Pressable>
-                  <Pressable onPress={() => handleSort("newest")} style={styles.modalOption}>
-                    <Text>Mới nhất</Text>
-                  </Pressable>
-                  <Pressable onPress={() => handleSort("oldest")} style={styles.modalOption}>
-                    <Text>Cũ nhất</Text>
-                  </Pressable>
-                  <TouchableOpacity onPress={closeModal}>
-                    <Text style={styles.closeButton}>Đóng</Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
-            </Modal>
+            <View style={styles.modalOverlay}>
+              <Animated.View style={[
+                styles.modalContainer,
+                { transform: [{ translateY: slideAnim }] },
+              ]}>
+                <Text style={styles.modalTitle}>Sắp xếp</Text>
+                <Pressable onPress={() => handleSort("name_asc")} style={styles.modalOption}>
+                  <Text>Tên (A-Z)</Text>
+                </Pressable>
+                <Pressable onPress={() => handleSort("name_desc")} style={styles.modalOption}>
+                  <Text>Tên (Z-A)</Text>
+                </Pressable>
+                <Pressable onPress={() => handleSort("newest")} style={styles.modalOption}>
+                  <Text>Mới nhất</Text>
+                </Pressable>
+                <Pressable onPress={() => handleSort("oldest")} style={styles.modalOption}>
+                  <Text>Cũ nhất</Text>
+                </Pressable>
+                <TouchableOpacity onPress={closeModal}>
+                  <Text style={styles.closeButton}>Đóng</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+          </Modal>
         </View>
       )}
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#CC0000"
-          style={{ marginTop: 20 }}
-        />
+        <View style={globalStyles.loadingContainer}>
+          <ActivityIndicator
+            size="large"
+            color="#CC0000"
+            style={{ marginTop: 20 }}
+          />
+        </View>  
       ) : classes.length === 0 ? (
         <View style={styles.noClassesContainer}>
           <Text style={styles.noClassesText}>Không có lớp học nào</Text>
