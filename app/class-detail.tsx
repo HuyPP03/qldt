@@ -10,7 +10,8 @@ import {
   TextInput,
   Animated,
   Modal,
-  Pressable, 
+  Pressable,
+  TouchableWithoutFeedback, 
 } from "react-native";
 import { useEffect } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -24,6 +25,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useUser } from "./contexts/UserContext";
 import { globalStyles } from "@/styles/globalStyles";
 import { Toast } from "@/components/Toast";
+import LoadingIndicator from "@/components/LoadingIndicator";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 interface SurveyData{
     id: string;
     title: string;
@@ -84,8 +87,6 @@ export default function ClassDetail() {
     setConfirmationModalVisible(false);
   };
 
-  console.log(selectedSurvey?.id)
-
   const deleteSurvey = async () => {
     const token = await AsyncStorage.getItem("userToken");
   
@@ -141,7 +142,6 @@ export default function ClassDetail() {
   
         if (data.meta.code === "1000") {
           setSurveys(data.data); 
-          setFilteredSurveys(data.data);
         } else {
           console.error("Failed to fetch surveys:", data.meta.message);
           setError(data.meta.message);
@@ -205,26 +205,55 @@ export default function ClassDetail() {
               animationType="none"
               onRequestClose={closeModal}
             >
-              <View style={styles.modalOverlay}>
-                <Animated.View style={[
-                  styles.modalContainer,
-                  { transform: [{ translateY: slideAnim }] },
-                ]}>
-                  <Text style={styles.modalTitle}>Bài kiểm tra</Text>
-                  <Pressable onPress={() => {
-                    openConfirmationModal()
-                    closeModal()  
-                  }} style={styles.modalOption}>
-                    <Text>Xóa bài kiểm tra</Text>
-                  </Pressable>
-                  <Pressable onPress={() => {}} style={styles.modalOption}>
-                    <Text>Chỉnh sửa bài kiểm tra</Text>
-                  </Pressable>
-                  <TouchableOpacity onPress={closeModal}>
-                    <Text style={styles.closeButton}>Đóng</Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
+              <TouchableWithoutFeedback onPress={closeModal}>
+                <View style={styles.modalOverlay}>
+                  <Animated.View
+                    style={[
+                      styles.modalContainer,
+                      { transform: [{ translateY: slideAnim }] },
+                    ]}
+                  >
+                    <Text style={styles.modalTitle}>Bài kiểm tra</Text>
+                    <Pressable
+                      onPress={() => {
+                        openConfirmationModal();
+                        closeModal();
+                      }}
+                      style={styles.modalOption}
+                    >
+                      <Text>Xóa bài kiểm tra</Text>
+                    </Pressable>
+                    <Pressable onPress={() => {}} style={styles.modalOption}>
+                      <Text>Chỉnh sửa bài kiểm tra</Text>
+                    </Pressable>
+                    <TouchableOpacity onPress={closeModal}>
+                      <Text style={styles.closeButton}>Đóng</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
+            <Modal
+              visible={confirmationModalVisible}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={closeConfirmationModal}
+            >
+              <TouchableWithoutFeedback onPress={closeConfirmationModal}>
+                <View style={styles.modalOverlay}>
+                  <View style={[styles.modalContainer, { zIndex: 9999 }]}>
+                    <Text style={styles.modalTitle}>Xác nhận xóa bài kiểm tra</Text>
+                    <View style={styles.modalButtonsContainer}>
+                      <Pressable onPress={deleteSurvey} style={styles.modalConfirmButton}>
+                        <Text style={styles.modalConfirmButtonText}>Xác nhận</Text>
+                      </Pressable>
+                      <Pressable onPress={closeConfirmationModal} style={styles.modalCancelButton}>
+                        <Text style={styles.modalCancelButtonText}>Hủy</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
             </Modal>
             <ScrollView contentContainerStyle={styles.listContainer}>
               {filteredSurveys.map((survey) => (
@@ -245,15 +274,13 @@ export default function ClassDetail() {
                 </View>
               ))}
             </ScrollView>
-            <TouchableOpacity
-            style={styles.floatingActionButton}
-            onPress={() => router.push({
-              pathname: "/create-survey",
-              params: { id },
-            })} 
-            >
-            <Ionicons name="add" size={32} color="white" />
-          </TouchableOpacity>
+            <FloatingActionButton 
+              onPress={() => router.push({
+                pathname: "/create-survey",
+                params: { id },
+              })}
+              iconName="add"
+            />
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.listContainer}>
@@ -376,31 +403,8 @@ export default function ClassDetail() {
       </View>
       
       {loading ? (
-        <View style={globalStyles.loadingContainer}>
-          <ActivityIndicator size="large" color="#CC0000" />
-        </View>
+        <LoadingIndicator/>
       ) : renderContent()}
-
-      <Modal
-        visible={confirmationModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={closeConfirmationModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { zIndex: 9999 }]}>
-            <Text style={styles.modalTitle}>Xác nhận xóa bài kiểm tra</Text>
-            <View style={styles.modalButtonsContainer}>
-              <Pressable onPress={deleteSurvey} style={styles.modalConfirmButton}>
-                <Text style={styles.modalConfirmButtonText}>Xác nhận</Text>
-              </Pressable>
-              <Pressable onPress={closeConfirmationModal} style={styles.modalCancelButton}>
-                <Text style={styles.modalCancelButtonText}>Hủy</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {error ? <Toast message={error} onDismiss={() => setError(null)} /> : null}
     </View>
@@ -494,22 +498,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginRight: 10,
     color: "#666",
-  },
-  floatingActionButton: {
-    position: "absolute",
-    bottom: 16,
-    right: 16,
-    backgroundColor: "#CC0000",
-    borderRadius: 50,
-    width: 56,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
   },
   modalOverlay: {
     flex: 1,
