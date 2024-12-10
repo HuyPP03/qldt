@@ -61,7 +61,7 @@ export default function SignIn() {
 
   const router = useRouter();
 
-  const { setUserInfo } = useUser();
+  const { setUserInfo, setToken } = useUser();
 
   const handleSignIn = async () => {
     try {
@@ -72,11 +72,11 @@ export default function SignIn() {
 
       await AsyncStorage.setItem("userToken", response.data.token);
       setUserInfo(response.data);
-
+      setToken(response.data.token);
       router.replace("/");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-      setErrorMessage("Đăng nhập không thành công. Vui lòng thử lại.");
+      setErrorMessage(error.message);
       setTimeout(() => setErrorMessage(""), 3000);
     }
   };
