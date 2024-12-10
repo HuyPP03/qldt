@@ -11,6 +11,7 @@ import {
   Modal,
   Pressable,
   Animated,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ClassItem from "../components/ClassItem";
@@ -21,6 +22,7 @@ import { SERVER_URL } from "@/utility/env";
 import { useUser } from "./contexts/UserContext";
 import { Toast } from "@/components/Toast";
 import { globalStyles } from "@/styles/globalStyles";
+import LoadingIndicator from "@/components/LoadingIndicator";
 
 interface ClassData {
   class_id: string;
@@ -71,6 +73,8 @@ export default function ClassesScreen() {
   const [upcomingClasses, setUpcomingClasses] = useState<ClassData[]>([]);
   const [completedClasses, setCompletedClasses] = useState<ClassData[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>("active");
+
+  const [refreshing, setRefreshing] = useState<boolean>(false); 
 
   const [pageSize] = useState<number>(1000); 
 
@@ -143,6 +147,7 @@ export default function ClassesScreen() {
       setError(error instanceof Error ? error.message : "An unknown error occurred");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -161,6 +166,11 @@ export default function ClassesScreen() {
       duration: 300,
       useNativeDriver: true,
     }).start(() => setSortModalVisible(false));
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadClasses(currentPage); 
   };
 
   useEffect(() => {
@@ -271,7 +281,6 @@ export default function ClassesScreen() {
         </TouchableOpacity>
       </View>
 
-      {!loading && (
       <View>
           <View style={styles.searchSortContainer}>
             <TextInput
@@ -316,21 +325,17 @@ export default function ClassesScreen() {
             </View>
           </Modal>
         </View>
-      )}
+
       {loading ? (
-        <View style={globalStyles.loadingContainer}>
-          <ActivityIndicator
-            size="large"
-            color="#CC0000"
-            style={{ marginTop: 20 }}
-          />
-        </View>  
+        <LoadingIndicator/>  
       ) : classes.length === 0 ? (
         <View style={styles.noClassesContainer}>
           <Text style={styles.noClassesText}>Không có lớp học nào</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.listContainer}>
+        <ScrollView contentContainerStyle={styles.listContainer} refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }>
         <View style={styles.gridContainer}>
           {filteredClasses.map((item) => (
             <View key={item.class_id} style={styles.classItemContainer}>
