@@ -66,6 +66,7 @@ export default function EditClass() {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [status, setStatus] = useState("ACTIVE");
 
   const { token } = useUser();
   const route = useRoute();
@@ -91,6 +92,7 @@ export default function EditClass() {
         setMaxStudents(response.data.max_student_amount.toString());
         setStartDate(new Date(response.data.start_date));
         setEndDate(new Date(response.data.end_date));
+        setStatus(response.data.status);
       } catch (error) {
         setErrorMessage("Tìm lớp không thành công. Vui lòng thử lại sau.");
         setTimeout(() => setErrorMessage(""), 3000);
@@ -110,6 +112,7 @@ export default function EditClass() {
         max_student_amount: parseInt(maxStudents),
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
+        status,
       };
 
       await request(`${SERVER_URL}/it5023e/edit_class`, {
@@ -118,8 +121,8 @@ export default function EditClass() {
       });
 
       router.push("/class-management");
-    } catch (error) {
-      setErrorMessage("Cập nhật lớp không thành công. Vui lòng thử lại sau.");
+    } catch (error: any) {
+      setErrorMessage(error.data);
       setTimeout(() => setErrorMessage(""), 3000);
     }
   };
@@ -135,8 +138,8 @@ export default function EditClass() {
       });
 
       router.push("/class-management");
-    } catch (error) {
-      setErrorMessage("Xóa lớp không thành công. Vui lòng thử lại sau.");
+    } catch (error: any) {
+      setErrorMessage(error.data);
       setTimeout(() => setErrorMessage(""), 3000);
     }
   };
@@ -244,6 +247,26 @@ export default function EditClass() {
               value="LT+BT"
               color="#CC0000"
             />
+          </Picker>
+        </View>
+
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={status}
+            style={[styles.picker, styles.pickerText]}
+            onValueChange={setStatus}
+          >
+            <Picker.Item
+              label="Đang hoạt động"
+              value="ACTIVE"
+              color="#CC0000"
+            />
+            <Picker.Item
+              label="Đã hoàn thành"
+              value="COMPLETED"
+              color="#CC0000"
+            />
+            <Picker.Item label="Sắp diễn ra" value="UPCOMING" color="#CC0000" />
           </Picker>
         </View>
 

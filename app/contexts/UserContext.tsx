@@ -21,6 +21,7 @@ interface UserContextType {
   setUserInfo: (user: UserInfo | null) => void;
   loading: boolean;
   logout: () => Promise<void>;
+  setToken: (token: string | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -77,7 +78,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UserContext.Provider
-      value={{ userInfo, setUserInfo, loading, logout, token }}
+      value={{ userInfo, setUserInfo, loading, logout, token, setToken }}
     >
       {children}
     </UserContext.Provider>
