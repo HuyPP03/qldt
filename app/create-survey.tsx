@@ -79,9 +79,14 @@ export default function CreateSurvey() {
   };
 
   const handleCreateSurvey = async () => {
-    if (!title || !description) {
+    if (!title || !description || !file) {
       setError("Please provide sufficient information");
       setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+    if(deadline < new Date()){
+      setError("Deadline không được là quá khứ")
       return;
     }
 
@@ -116,7 +121,7 @@ export default function CreateSurvey() {
         params: { id },
       });
     } catch (error) {
-      setError("Error creating survey");
+      setError("Không tạo được bài kiểm tra");
       setTimeout(() => setError(""), 3000);
     }
   };
