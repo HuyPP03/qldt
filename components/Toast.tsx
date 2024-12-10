@@ -5,7 +5,7 @@ import {
     StyleSheet,
   } from "react-native";
 
-const Toast = ({ message, onDismiss }: { message: string; onDismiss: () => void }) => {
+export function Toast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
     const translateY = new Animated.Value(100);
   
     React.useEffect(() => {
@@ -73,4 +73,3 @@ const styles = StyleSheet.create({
       },
 });
 
-  export default Toast;
