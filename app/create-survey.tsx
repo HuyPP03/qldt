@@ -87,7 +87,9 @@ export default function CreateSurvey() {
 
     try {
       const formData = new FormData();
-      const formattedDeadline = deadline.toISOString().split(".")[0];
+      const localDeadline = new Date(deadline.getTime() + 7 * 60 * 60 * 1000);
+      const formattedDeadline = localDeadline.toISOString().split(".")[0];
+      console.log(formattedDeadline)
 
       if (file) {
         formData.append("file", file);
