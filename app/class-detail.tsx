@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,10 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  TextInput, 
+  TextInput,
+  Animated,
+  Modal,
+  Pressable, 
 } from "react-native";
 import { useEffect } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -30,21 +33,93 @@ interface SurveyData{
     class_id: string;
 }
 
+interface Response{
+  data: string;
+  meta: {
+    code: string
+    message: string
+  }
+}
+
 export default function ClassDetail() {
   const route = useRoute();
   const router = useRouter();
   const { id, name } = route.params as { id: string; name: string };
-
+  const slideAnim = useRef(new Animated.Value(300)).current;
   const [activeTab, setActiveTab] = useState("Bài kiểm tra");
   const [surveys, setSurveys] = useState<SurveyData[]>([]); 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null); 
-
+  const [selectedSurvey, setSelectedSurvey] = useState<SurveyData>();
   const [filteredSurveys, setFilteredSurveys] = useState<SurveyData[]>([]);
   const [searchText, setSearchText] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-
   const { userInfo } = useUser();
+
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [confirmationModalVisible, setConfirmationModalVisible] = useState<boolean>(false);
+
+  const openModal = () => {
+    setModalVisible(true);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeModal = () => {
+    Animated.timing(slideAnim, {
+      toValue: 300,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setModalVisible(false));
+  };
+
+  const openConfirmationModal = () => {
+    setConfirmationModalVisible(true);
+  };
+
+  const closeConfirmationModal = () => {
+    setConfirmationModalVisible(false);
+  };
+
+  console.log(selectedSurvey?.id)
+
+  const deleteSurvey = async () => {
+    const token = await AsyncStorage.getItem("userToken");
+  
+      if (!token) {
+        setError("Token is missing");
+        return;
+      }
+
+    try {
+      if(!selectedSurvey){
+        setError("No survey selected to delete")
+        return;
+      }
+
+      const response = await request<Response>(`${SERVER_URL}/it5023e/delete_survey`, {
+        method: "POST",
+        body: {
+          token: token,
+          survey_id: selectedSurvey.id,
+        },
+      });
+
+      if (response.meta.code === "1000") {
+        setSurveys((prevSurveys) => prevSurveys.filter((survey) => survey.id !== selectedSurvey.id));
+        setFilteredSurveys((prevSurveys) => prevSurveys.filter((survey) => survey.id !== selectedSurvey.id));
+      } else {
+        setError(response.meta.message || "Failed to delete survey.");
+      }
+    } catch (error) {
+      setError("Something went wrong");
+    } finally {
+      setConfirmationModalVisible(false);
+    }
+  };
 
   useEffect(() => {
     const fetchSurveys = async () => {
@@ -54,7 +129,7 @@ export default function ClassDetail() {
         setError("Token is missing");
         return;
       }
-      
+
       try {
         const data = await request<any>(`${SERVER_URL}/it5023e/get_all_surveys`, {
           method: "POST",
@@ -124,6 +199,33 @@ export default function ClassDetail() {
                 />
               </TouchableOpacity>
             </View>
+            <Modal
+              visible={modalVisible}
+              transparent={true}
+              animationType="none"
+              onRequestClose={closeModal}
+            >
+              <View style={styles.modalOverlay}>
+                <Animated.View style={[
+                  styles.modalContainer,
+                  { transform: [{ translateY: slideAnim }] },
+                ]}>
+                  <Text style={styles.modalTitle}>Bài kiểm tra</Text>
+                  <Pressable onPress={() => {
+                    openConfirmationModal()
+                    closeModal()  
+                  }} style={styles.modalOption}>
+                    <Text>Xóa bài kiểm tra</Text>
+                  </Pressable>
+                  <Pressable onPress={() => {}} style={styles.modalOption}>
+                    <Text>Chỉnh sửa bài kiểm tra</Text>
+                  </Pressable>
+                  <TouchableOpacity onPress={closeModal}>
+                    <Text style={styles.closeButton}>Đóng</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+            </Modal>
             <ScrollView contentContainerStyle={styles.listContainer}>
               {filteredSurveys.map((survey) => (
                 <View key={survey.id} style={styles.surveyItemContainer}>
@@ -135,6 +237,10 @@ export default function ClassDetail() {
                     deadline={survey.deadline}
                     description={survey.description}
                     fileUrl={survey.file_url}
+                    onMenuPress={() => {
+                      setSelectedSurvey(survey)
+                      openModal()
+                    }}
                   />
                 </View>
               ))}
@@ -275,6 +381,27 @@ export default function ClassDetail() {
         </View>
       ) : renderContent()}
 
+      <Modal
+        visible={confirmationModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeConfirmationModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, { zIndex: 9999 }]}>
+            <Text style={styles.modalTitle}>Xác nhận xóa bài kiểm tra</Text>
+            <View style={styles.modalButtonsContainer}>
+              <Pressable onPress={deleteSurvey} style={styles.modalConfirmButton}>
+                <Text style={styles.modalConfirmButtonText}>Xác nhận</Text>
+              </Pressable>
+              <Pressable onPress={closeConfirmationModal} style={styles.modalCancelButton}>
+                <Text style={styles.modalCancelButtonText}>Hủy</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {error ? <Toast message={error} onDismiss={() => setError(null)} /> : null}
     </View>
   );
@@ -383,5 +510,64 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    height: "100%",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    width: "100%",
+    position: "absolute",
+    bottom: 0,
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  modalOption: {
+    padding: 10,
+    width: "100%",
+    alignItems: "center",
+    borderBottomColor: "#ccc",
+    borderBottomWidth: 1,
+  },
+  closeButton: {
+    color: "blue",
+    textAlign: "right",
+  },
+  modalButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalConfirmButton: {
+    flex: 1,
+    backgroundColor: "#CC0000", 
+    paddingVertical: 10,
+    borderRadius: 5,
+    marginRight: 10,
+    alignItems: "center",
+  },
+  modalCancelButton: {
+    flex: 1,
+    backgroundColor: "#D3D3D3", 
+    paddingVertical: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  modalConfirmButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  modalCancelButtonText: {
+    color: "black",
   },
 });

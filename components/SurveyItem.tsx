@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
@@ -9,6 +10,7 @@ interface SurveyItemProps {
   deadline: string; 
   description: string;
   fileUrl: string;
+  onMenuPress?: () => void;
 }
 
 const SurveyItem: React.FC<SurveyItemProps> = ({
@@ -18,6 +20,7 @@ const SurveyItem: React.FC<SurveyItemProps> = ({
   deadline,
   description,
   fileUrl,
+  onMenuPress,
 }) => {
   const router = useRouter();
 
@@ -65,6 +68,9 @@ const SurveyItem: React.FC<SurveyItemProps> = ({
         <Text style={styles.className}>Lớp: {className}</Text>
         <Text style={styles.deadline}>Hạn: {formatDeadline(deadline)}</Text>
       </View>
+      <TouchableOpacity onPress={onMenuPress} style={styles.menuIcon}>
+        <Ionicons name="ellipsis-vertical" size={24} color="#666" /> 
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 };
@@ -126,6 +132,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#1E90FF",
     marginTop: 4,
+  },
+  menuIcon: {
+    position: "absolute",
+    top: 10,
+    right: 10,
   },
 });
 
