@@ -13,104 +13,98 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as DocumentPicker from "expo-document-picker";
+import * as DocumentPicker from 'expo-document-picker';
 import request from "../utility/request";
 import { useUser } from "./contexts/UserContext";
 import React from "react";
 import { SERVER_URL } from "@/utility/env";
 import { useEffect } from "react";
 import { useRoute } from "@react-navigation/native";
-import { Toast } from "@/components/Toast";
+import { Toast } from "@/components/Toast"
 
 export default function CreateSurvey() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState<any>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [deadline, setDeadline] = useState(new Date());
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { token, userInfo } = useUser();
 
   const route = useRoute();
 
-  const { id } = route.params as { id: string };
+  const { id } = route.params as { id: string }
 
   useEffect(() => {
     if (userInfo?.role !== "LECTURER") {
-      router.replace("/");
+      router.replace("/"); 
     }
   }, [userInfo]);
 
   const handleFileUpload = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
+        type: '*/*', 
       });
 
       if (result.canceled) {
-        console.log("User canceled the file selection.");
+        console.log('User canceled the file selection.');
         return;
       }
 
       if (result.assets?.length > 0) {
-        const fileInfo = result.assets[0];
+        const fileInfo = result.assets[0]; 
         const { uri, name, mimeType } = fileInfo;
 
-        const validMimeTypes = ["application/pdf", "image/jpeg", "image/png"];
-        if (!validMimeTypes.includes(mimeType!)) {
-          setError("Vui lòng chọn file hợp lệ (PDF, JPEG, PNG).");
-          return;
-        }
-
         if (uri) {
-          const selectedFile = {
-            uri,
-            name,
-            type: mimeType || "application/octet-stream",
-          };
+          const fileResponse = await fetch(uri);
+          const fileBlob = await fileResponse.blob();
+
+          const selectedFile = new File([fileBlob], name, { type: mimeType || 'application/octet-stream' });
           setFile(selectedFile);
         }
       }
     } catch (error) {
-      console.error("Error selecting the file:", error);
+      console.error('Error selecting the file:', error);
     }
   };
 
   const handleCreateSurvey = async () => {
-    if (!title || !description) {
+    if (!title || !description || !file) {
       setError("Please provide sufficient information");
       setTimeout(() => setError(""), 3000);
       return;
     }
-
+  
     try {
       const formData = new FormData();
-      const localDeadline = new Date(deadline.getTime() + 7 * 60 * 60 * 1000);
-      const formattedDeadline = localDeadline.toISOString().split(".")[0];
+      const formattedDeadline = deadline.toISOString().split('.')[0]; 
+      
       console.log(formattedDeadline)
 
-      if (file) {
+      if (file instanceof File) {
         formData.append("file", file);
       } else {
         throw new Error("Invalid file type.");
       }
-
       formData.append("token", token!);
       formData.append("classId", id);
       formData.append("title", title);
       formData.append("deadline", formattedDeadline);
       formData.append("description", description);
+      
+
+      console.log(formData)
 
       const response = await request(`${SERVER_URL}/it5023e/create_survey`, {
         method: "POST",
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        body: formData,
+        body: formData, 
       });
-
+  
       router.push({
         pathname: "/class-detail",
         params: { id },
@@ -120,7 +114,7 @@ export default function CreateSurvey() {
       setTimeout(() => setError(""), 3000);
     }
   };
-
+  
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -157,10 +151,7 @@ export default function CreateSurvey() {
           numberOfLines={4}
         />
 
-        <TouchableOpacity
-          style={styles.uploadButton}
-          onPress={handleFileUpload}
-        >
+        <TouchableOpacity style={styles.uploadButton} onPress={handleFileUpload}>
           <Text style={styles.uploadButtonText}>
             {file ? file.name : "Tải lên tệp *"}
           </Text>
@@ -172,56 +163,29 @@ export default function CreateSurvey() {
             style={styles.timeInput}
             onPress={() => setShowDeadlinePicker(true)}
           >
-            <Text style={styles.inputText}>{deadline.toLocaleString()}</Text>
+            <Text style={styles.inputText}>
+              {deadline.toISOString().split("T")[0]}
+            </Text>
           </TouchableOpacity>
           {showDeadlinePicker && (
             <DateTimePicker
               value={deadline}
-              mode="date"
+              mode="datetime"
               display="default"
               onChange={(event, date) => {
                 setShowDeadlinePicker(false);
-                if (date) {
-                  setDeadline(
-                    new Date(
-                      date.setHours(deadline.getHours(), deadline.getMinutes())
-                    )
-                  );
-                  setShowTimePicker(true);
-                }
-              }}
-            />
-          )}
-          {showTimePicker && (
-            <DateTimePicker
-              value={deadline}
-              mode="time"
-              display="default"
-              onChange={(event, time) => {
-                setShowTimePicker(false);
-                if (time) {
-                  setDeadline(
-                    new Date(
-                      deadline.setHours(time.getHours(), time.getMinutes())
-                    )
-                  );
-                }
+                if (date) setDeadline(date);
               }}
             />
           )}
         </View>
 
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={handleCreateSurvey}
-        >
+        <TouchableOpacity style={styles.createButton} onPress={handleCreateSurvey}>
           <Text style={styles.buttonText}>Tạo</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      {error ? (
-        <Toast message={error} onDismiss={() => setError(null)} />
-      ) : null}
+      {error ? <Toast message={error} onDismiss={() => setError(null)} /> : null}
     </View>
   );
 }
