@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   StatusBar,
+  Pressable,
 } from "react-native";
 import { Text } from "react-native";
 import MenuItem, { menuItems } from "../../components/MenuItem";
@@ -24,6 +25,7 @@ import { useRouter } from "expo-router";
 export default function HomeScreen() {
   const router = useRouter();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const slideAnim = useRef(
     new Animated.Value(Dimensions.get("window").width)
   ).current;
@@ -33,15 +35,9 @@ export default function HomeScreen() {
   const [unreadNotifications, setUnreadNotifications] = useState(5);
 
   useEffect(() => {
-    if (isDrawerOpen) {
+    if (isDrawerOpen && !isClosing) {
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(slideAnim, {
-        toValue: Dimensions.get("window").width,
         duration: 300,
         useNativeDriver: true,
       }).start();
@@ -54,6 +50,18 @@ export default function HomeScreen() {
       weekDays.push(moment().startOf("week").add(i, "days"));
     }
     return weekDays;
+  };
+
+  const handleCloseDrawer = () => {
+    setIsClosing(true);
+    Animated.timing(slideAnim, {
+      toValue: Dimensions.get("window").width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setIsClosing(false);
+      setIsDrawerOpen(false);
+    });
   };
 
   if (loading || !userInfo) {
@@ -86,15 +94,11 @@ export default function HomeScreen() {
         visible={isDrawerOpen}
         transparent={true}
         animationType="none"
-        onRequestClose={() => setIsDrawerOpen(false)}
+        onRequestClose={handleCloseDrawer}
         statusBarTranslucent={true}
       >
         <View style={styles.modalContainer}>
-          <TouchableOpacity
-            style={styles.overlay}
-            activeOpacity={1}
-            onPress={() => setIsDrawerOpen(false)}
-          >
+          <Pressable style={styles.overlay} onPress={handleCloseDrawer}>
             <Animated.View
               style={[
                 styles.drawer,
@@ -102,21 +106,86 @@ export default function HomeScreen() {
                   transform: [{ translateX: slideAnim }],
                 },
               ]}
+              onStartShouldSetResponder={() => true}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+              }}
             >
+              <Pressable
+                style={({ pressed }) => [
+                  styles.drawerCloseButton,
+                  pressed && {
+                    opacity: 0.8,
+                    transform: [{ scale: 0.95 }],
+                  },
+                ]}
+                onPress={(e) => {
+                  e.stopPropagation(); // Ngăn sự kiện bubble
+                  handleCloseDrawer();
+                }}
+              >
+                <View style={styles.closeButtonInner}>
+                  <Ionicons name="close" size={22} color="#333" />
+                </View>
+              </Pressable>
+
+              {/* User Info Section */}
+              <View style={styles.drawerUserSection}>
+                {userInfo?.avatar ? (
+                  <Image
+                    source={{ uri: userInfo.avatar }}
+                    style={styles.drawerAvatar}
+                  />
+                ) : (
+                  <View style={styles.drawerAvatarPlaceholder}>
+                    <Text style={styles.drawerAvatarText}>
+                      {userInfo?.ten?.[0] || "U"}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.drawerUserInfo}>
+                  <Text style={styles.drawerUserName}>
+                    {userInfo?.ho + " " + userInfo?.ten}
+                  </Text>
+                  <Text style={styles.drawerUserRole}>
+                    {userInfo?.role?.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Drawer Menu Items */}
+              <View style={styles.drawerMenu}>
+                <TouchableOpacity
+                  style={styles.drawerMenuItem}
+                  onPress={() => {
+                    router.push("/profile");
+                  }}
+                >
+                  <Ionicons name="person-outline" size={24} color="#333" />
+                  <Text style={styles.drawerMenuItemText}>
+                    Thông tin cá nhân
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.drawerMenuItem}>
+                  <Ionicons name="help-circle-outline" size={24} color="#333" />
+                  <Text style={styles.drawerMenuItemText}>Trợ giúp</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Logout Button */}
               <TouchableOpacity
-                style={styles.drawerItem}
+                style={styles.logoutButton}
                 onPress={() => {
                   logout();
                   setIsDrawerOpen(false);
                 }}
               >
-                <View style={styles.logoutButton}>
-                  <Ionicons name="log-out-outline" size={24} color="#fff" />
-                  <Text style={styles.logoutText}>Đăng xuất</Text>
-                </View>
+                <Ionicons name="log-out-outline" size={24} color="#fff" />
+                <Text style={styles.logoutText}>Đăng xuất</Text>
               </TouchableOpacity>
             </Animated.View>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </Modal>
 
@@ -375,60 +444,116 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#888",
   },
-  logoutButton: {
-    backgroundColor: "#CC0000",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 15,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 3,
-  },
-  logoutText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 10,
-  },
   menuButton: {
     padding: 8,
   },
   overlay: {
     flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   drawer: {
     position: "absolute",
     right: 0,
     top: 0,
     bottom: 0,
-    width: "70%",
-    backgroundColor: "white",
-    padding: 20,
+    width: "85%",
+    backgroundColor: "#fff",
     paddingTop: Platform.OS === "ios" ? 50 : 30,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
     shadowColor: "#000",
     shadowOffset: {
       width: -2,
       height: 0,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 10,
+    elevation: 10,
   },
-  drawerItem: {
-    marginTop: "auto",
-    marginBottom: 20,
+  drawerUserSection: {
+    padding: 20,
+    paddingTop: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    flexDirection: "row",
+    alignItems: "center",
   },
-  drawerItemText: {
+  drawerAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 15,
+  },
+  drawerAvatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#CC0000",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 15,
+  },
+  drawerAvatarText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  drawerUserInfo: {
+    flex: 1,
+  },
+  drawerUserName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#333",
+  },
+  drawerUserRole: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
+  },
+  drawerMenu: {
+    padding: 15,
+  },
+  drawerMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  drawerMenuItemText: {
     marginLeft: 15,
     fontSize: 16,
     color: "#333",
+    fontWeight: "500",
+  },
+  logoutButton: {
+    position: "absolute",
+    bottom: 30,
+    left: 20,
+    right: 20,
+    backgroundColor: "#CC0000",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 15,
+    borderRadius: 12,
+    shadowColor: "#CC0000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  logoutText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 10,
   },
   modalContainer: {
     flex: 1,
@@ -590,5 +715,38 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#fff",
     fontWeight: "bold",
+  },
+  drawerCloseButton: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 30,
+    right: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
+  },
+  closeButtonInner: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+  },
+  drawerContent: {
+    flex: 1,
   },
 });

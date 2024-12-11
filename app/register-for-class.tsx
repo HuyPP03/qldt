@@ -20,10 +20,10 @@ import { SERVER_URL } from "@env";
 
 const Toast = ({
   message,
-  type = "error",
+  type,
 }: {
   message: string;
-  type?: "error" | "success";
+  type: "error" | "success";
 }) => {
   const translateY = new Animated.Value(100);
 
@@ -79,17 +79,25 @@ const Loading = () => {
   );
 };
 
+interface Class {
+  class_id: string;
+  class_name: string;
+  class_type: string;
+  status: "ACTIVE" | "INACTIVE";
+  max_student_amount: number;
+  start_date: string;
+  end_date: string;
+}
+
 export default function RegisterForClass() {
   const { token } = useUser();
   const navigation = useNavigation();
-  const [classes, setClasses] = useState<any[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [classId, setClassId] = useState("");
-  const [selectedClassIndex, setSelectedClassIndex] = useState<number | null>(
-    null
-  );
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
 
   const searchClass = async () => {
     try {
@@ -116,8 +124,8 @@ export default function RegisterForClass() {
           setTimeout(() => setErrorMessage(""), 3000);
         }
       }
-    } catch (error) {
-      setErrorMessage("Tìm kiếm lớp không thành công. Vui lòng thử lại sau.");
+    } catch (error: any) {
+      setErrorMessage(error.data);
       setTimeout(() => setErrorMessage(""), 3000);
     }
   };
@@ -134,25 +142,25 @@ export default function RegisterForClass() {
       });
 
       if (response) {
+        setIsLoading(false);
         setSuccessMessage("Đăng ký lớp thành công!");
         setClasses([]);
         setTimeout(() => setSuccessMessage(""), 3000);
       }
     } catch (error) {
+      setIsLoading(false);
       setErrorMessage("Đăng ký lớp không thành công. Vui lòng thử lại sau.");
       setTimeout(() => setErrorMessage(""), 3000);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleDeleteClass = () => {
-    if (selectedClassIndex !== null) {
+    if (selectedClasses.length > 0) {
       const newClasses = classes.filter(
-        (_, index) => index !== selectedClassIndex
+        (_, index) => !selectedClasses.includes(index)
       );
       setClasses(newClasses);
-      setSelectedClassIndex(null);
+      setSelectedClasses([]);
     }
   };
 
@@ -183,61 +191,157 @@ export default function RegisterForClass() {
 
       <View style={styles.selectedClasses}>
         <View style={styles.tableContainer}>
-          <View style={styles.tableHeader}>
-            <View style={styles.tableRow}>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>
-                <Text style={styles.headerText}>Mã lớp</Text>
-              </Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>
-                <Text style={styles.headerText}>Mã lớp kèm</Text>
-              </Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>
-                <Text style={styles.headerText}>Tên lớp</Text>
-              </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View>
+              <View style={styles.tableHeader}>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Mã lớp</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Mã lớp kèm</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Tên lớp</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Loại lớp</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Trạng thái</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Số lượng tối đa</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Ngày bắt đầu</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Ngày kết thúc</Text>
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.tableCell,
+                      styles.tableHeaderCell,
+                      styles.checkboxCell,
+                    ]}
+                    onPress={() => {
+                      if (selectedClasses.length === classes.length) {
+                        setSelectedClasses([]);
+                      } else {
+                        setSelectedClasses(classes.map((_, index) => index));
+                      }
+                    }}
+                  >
+                    <View style={[styles.checkbox, { borderColor: "white" }]}>
+                      {selectedClasses.length === classes.length && (
+                        <View
+                          style={[
+                            styles.checkboxInner,
+                            { backgroundColor: "white" },
+                          ]}
+                        />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <ScrollView style={styles.tableBody}>
+                {classes.map((classItem, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.tableRow,
+                      selectedClasses.includes(index) && styles.selectedRow,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClasses.includes(index) && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.class_id}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClasses.includes(index) && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.class_id}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClasses.includes(index) && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.class_name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClasses.includes(index) && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.class_type}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClasses.includes(index) && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.status}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClasses.includes(index) && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.max_student_amount}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClasses.includes(index) && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.start_date}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClasses.includes(index) && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.end_date}
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.tableCell, styles.checkboxCell]}
+                      onPress={() => {
+                        if (selectedClasses.includes(index)) {
+                          setSelectedClasses(
+                            selectedClasses.filter((i) => i !== index)
+                          );
+                        } else {
+                          setSelectedClasses([...selectedClasses, index]);
+                        }
+                      }}
+                    >
+                      <View style={styles.checkbox}>
+                        {selectedClasses.includes(index) && (
+                          <View style={styles.checkboxInner} />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
-          </View>
-          <ScrollView style={styles.tableBody}>
-            {classes.map((classItem, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.tableRow,
-                  selectedClassIndex === index && styles.selectedRow,
-                ]}
-                onPress={() => {
-                  if (selectedClassIndex === index) {
-                    setSelectedClassIndex(null);
-                  } else {
-                    setSelectedClassIndex(index);
-                  }
-                }}
-              >
-                <Text
-                  style={[
-                    styles.tableCell,
-                    selectedClassIndex === index && styles.selectedCell,
-                  ]}
-                >
-                  {classItem.class_id}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    selectedClassIndex === index && styles.selectedCell,
-                  ]}
-                >
-                  {classItem.class_id}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    selectedClassIndex === index && styles.selectedCell,
-                  ]}
-                >
-                  {classItem.class_name}
-                </Text>
-              </TouchableOpacity>
-            ))}
           </ScrollView>
         </View>
 
@@ -255,12 +359,12 @@ export default function RegisterForClass() {
           <TouchableOpacity
             style={[
               styles.deleteButton,
-              selectedClassIndex === null && styles.disabledButton,
+              selectedClasses.length === 0 && styles.disabledButton,
             ]}
             onPress={handleDeleteClass}
-            disabled={selectedClassIndex === null}
+            disabled={selectedClasses.length === 0}
           >
-            <Text style={styles.buttonText}>Xóa lớp</Text>
+            <Text style={styles.buttonText}>Xóa lớp đã chọn</Text>
           </TouchableOpacity>
         </View>
 
@@ -275,10 +379,8 @@ export default function RegisterForClass() {
       </View>
 
       {isLoading && <Loading />}
-      {errorMessage ? <Toast message={errorMessage} type="error" /> : null}
-      {successMessage ? (
-        <Toast message={successMessage} type="success" />
-      ) : null}
+      {successMessage && <Toast message={successMessage} type="success" />}
+      {errorMessage && <Toast message={errorMessage} type="error" />}
     </View>
   );
 }
@@ -344,14 +446,14 @@ const styles = StyleSheet.create({
   },
   searchButton: {
     backgroundColor: "#CC0000",
-    paddingHorizontal: 20,
-    height: 40,
-    justifyContent: "center",
+    padding: 15,
     borderRadius: 8,
+    alignItems: "center",
   },
   buttonText: {
     color: "white",
     fontWeight: "bold",
+    fontSize: 16,
   },
   selectedClasses: {
     padding: 16,
@@ -394,6 +496,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#ddd",
+    alignItems: "center",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -403,16 +506,16 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: "#CC0000",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    padding: 15,
     borderRadius: 8,
+    alignItems: "center",
     flex: 1,
   },
   deleteButton: {
     backgroundColor: "#CC0000",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    padding: 15,
     borderRadius: 8,
+    alignItems: "center",
     flex: 1,
   },
   sectionTitle: {
@@ -511,5 +614,27 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     fontWeight: "500",
+  },
+  checkboxCell: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    padding: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: "#CC0000",
+    borderRadius: 4,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
+  },
+  checkboxInner: {
+    width: 14,
+    height: 14,
+    backgroundColor: "#CC0000",
+    borderRadius: 2,
   },
 });

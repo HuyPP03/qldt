@@ -17,6 +17,17 @@ import request from "../utility/request";
 import { useUser } from "./contexts/UserContext";
 import { SERVER_URL } from "@env";
 
+// Cập nhật interface Class
+interface Class {
+  class_id: string;
+  class_name: string;
+  class_type: string;
+  status: "ACTIVE" | "COMPLETED" | "UPCOMING";
+  max_student_amount: number;
+  start_date: string;
+  end_date: string;
+}
+
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(100);
 
@@ -122,61 +133,121 @@ export default function ClassManagement() {
 
       <View style={styles.selectedClasses}>
         <View style={styles.tableContainer}>
-          <View style={styles.tableHeader}>
-            <View style={styles.tableRow}>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>
-                <Text style={styles.headerText}>Mã lớp</Text>
-              </Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>
-                <Text style={styles.headerText}>Mã lớp kèm</Text>
-              </Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>
-                <Text style={styles.headerText}>Tên lớp</Text>
-              </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View>
+              <View style={styles.tableHeader}>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Mã lớp</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Mã lớp kèm</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Tên lớp</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Loại lớp</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Trạng thái</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Số lượng tối đa</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Ngày bắt đầu</Text>
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableHeaderCell]}>
+                    <Text style={styles.headerText}>Ngày kết thúc</Text>
+                  </Text>
+                </View>
+              </View>
+
+              <ScrollView style={styles.tableBody}>
+                {classes.map((classItem, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.tableRow,
+                      selectedClassIndex === index && styles.selectedRow,
+                    ]}
+                    onPress={() => {
+                      if (selectedClassIndex === index) {
+                        setSelectedClassIndex(null);
+                      } else {
+                        setSelectedClassIndex(index);
+                      }
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClassIndex === index && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.class_id}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClassIndex === index && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.class_id}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClassIndex === index && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.class_name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClassIndex === index && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.class_type}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClassIndex === index && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.status}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClassIndex === index && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.max_student_amount}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClassIndex === index && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.start_date}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        selectedClassIndex === index && styles.selectedCell,
+                      ]}
+                    >
+                      {classItem.end_date}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
-          </View>
-          <ScrollView style={styles.tableBody}>
-            {classes.map((classItem, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.tableRow,
-                  selectedClassIndex === index && styles.selectedRow,
-                ]}
-                onPress={() => {
-                  if (selectedClassIndex === index) {
-                    setSelectedClassIndex(null);
-                  } else {
-                    setSelectedClassIndex(index);
-                  }
-                }}
-              >
-                <Text
-                  style={[
-                    styles.tableCell,
-                    selectedClassIndex === index && styles.selectedCell,
-                  ]}
-                >
-                  {classItem.class_id}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    selectedClassIndex === index && styles.selectedCell,
-                  ]}
-                >
-                  {classItem.class_id}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    selectedClassIndex === index && styles.selectedCell,
-                  ]}
-                >
-                  {classItem.class_name}
-                </Text>
-              </TouchableOpacity>
-            ))}
           </ScrollView>
         </View>
 
@@ -332,7 +403,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     padding: 12,
     width: 120,
-    height: 60,
+    height: 80,
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#ddd",
