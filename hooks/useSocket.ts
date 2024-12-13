@@ -7,7 +7,10 @@ import {
   SocketMessageResponse,
 } from "@/app/interfaces/chat/chat.interface";
 
-export const useSocket = (user: string, fetchConversation: () => void) => {
+export const useSocket = (
+  user: string,
+  fetchConversation: () => Promise<void>
+) => {
   const url = `${SERVER_URL}/ws`;
   const stompClientRef = useRef<CompatClient | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -40,14 +43,14 @@ export const useSocket = (user: string, fetchConversation: () => void) => {
       }
     };
 
-    const onMessageReceive = (payload: any) => {
+    const onMessageReceive = async (payload: any) => {
       try {
         const messageReceived = JSON.parse(
           payload.body
         ) as SocketMessageResponse;
         console.log("Message received:", messageReceived);
-        fetchConversation();
         // Notify all listeners about the new message
+        await fetchConversation();
         listenersRef.current.forEach((listener) => listener(messageReceived));
       } catch (error) {
         console.error("Error parsing received message:", error);

@@ -25,10 +25,14 @@ export default function MessagesScreen() {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [refreshing, setRefreshing] = React.useState<boolean>(false);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
+  const [curConversations, setCurConversations] = React.useState<
+    ChatConversation[] | null
+  >(null);
   const { conversations, fetchConversations } = useMessageContext();
 
   React.useEffect(() => {
     setLoading(true);
+    setCurConversations(conversations);
     setLoading(false);
   }, [conversations]);
 
@@ -124,7 +128,7 @@ export default function MessagesScreen() {
 
       <View style={styles.content}>
         <FlatList
-          data={conversations}
+          data={curConversations}
           renderItem={renderChatUser}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.usersList}

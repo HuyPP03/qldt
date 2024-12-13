@@ -11,7 +11,7 @@ import {
   FlatList,
   ListRenderItem,
 } from "react-native";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, RouteProp, useIsFocused } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -52,9 +52,11 @@ export default function Chat() {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [messageChange, setMessageChange] = React.useState<boolean>(false);
   const [newMessage, setNewMessage] = React.useState<string>("");
+  const isFocused = useIsFocused();
   const { userInfo } = useUser();
   const {
     socket: { sendMessage, addMessageListener, removeMessageListener },
+    fetchConversations,
   } = useMessageContext();
   const flatListRef = useRef<FlatList>(null);
 
@@ -84,6 +86,7 @@ export default function Chat() {
 
         if (res.meta.code === "1000") {
           setMessages(res.data.conversation.reverse());
+          await fetchConversations();
         } else {
           console.error("Failed to fetch conversations", res.meta.message);
         }
@@ -121,7 +124,9 @@ export default function Chat() {
     // if (message.sender.id != userInfo?.id) {
     //   setMessages((prevMessages) => [...prevMessages, receivedMessage]);
     // }
-    setMessageChange(!messageChange);
+    if (isFocused && message.sender.id != userInfo?.id) {
+      setMessageChange(!messageChange);
+    }
   };
 
   const handleNewSendMessage = (message: SendMessageRequest) => {
@@ -133,7 +138,7 @@ export default function Chat() {
       message_id: getRandomString(10),
     };
     // setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setMessageChange(!messageChange);
+    if (isFocused) setMessageChange(!messageChange);
   };
 
   const getRandomString = (length: number) => {

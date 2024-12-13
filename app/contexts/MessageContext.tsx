@@ -33,13 +33,10 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({
   const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
   const [socket, setSocket] = useState<SocketInterface | null>(null);
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
-  const { userInfo } = useUser();
+  const { userInfo, token } = useUser();
 
   const fetchConversations = async () => {
-    const token = await AsyncStorage.getItem("userToken");
-
     if (!token) {
-      console.error("Token is missing");
       return;
     }
 
@@ -51,7 +48,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({
           body: {
             token: token,
             index: 0,
-            count: 2,
+            count: 10,
           },
         }
       );
@@ -70,11 +67,14 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({
     }
   };
 
-  const socketInit: SocketInterface = useSocket(userInfo?.id || "", fetchConversations);
+  const socketInit: SocketInterface = useSocket(
+    userInfo?.id || "",
+    fetchConversations
+  );
   useEffect(() => {
     fetchConversations();
     setSocket(socketInit);
-  }, []);
+  }, [token]);
 
   return (
     <MessageContext.Provider

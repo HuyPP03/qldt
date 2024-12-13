@@ -69,7 +69,6 @@ const CreateChatModal: React.FC<CreateChatModalProps> = ({
         partnerAvatar: "",
       },
     });
-    console.log("Contact pressed", contact);
   };
 
   const renderContact = ({ item }: { item: UserAccount }) => (
