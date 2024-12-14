@@ -20,7 +20,7 @@ import {
   CreateAbsentResponse,
 } from "./interfaces/absent/absent.interface";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DocumentPicker from "react-native-document-picker";
+import * as DocumentPicker from "expo-document-picker";
 
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(100);
@@ -156,22 +156,20 @@ export default function CreateAbsent() {
 
   const handleDocumentPicker = async () => {
     try {
-      const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+      const res = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
       });
-      setEvidence(res[0]);
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log("User cancelled the picker");
-      } else {
-        console.log("Unknown error: ", err);
+      if (!res.canceled) {
+        setEvidence(res.assets[0]);
       }
+    } catch (err) {
+      console.log("Unknown error: ", err);
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
@@ -179,7 +177,7 @@ export default function CreateAbsent() {
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Tạo đơn nghỉ phép</Text>
-      </View>
+      </View> */}
 
       <ScrollView style={styles.formContainer}>
         <TextInput

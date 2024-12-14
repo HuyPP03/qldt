@@ -25,7 +25,7 @@ export interface AbsentRequest {
   title: string;
   reason: string;
   status: AbsentStatus;
-  file_url: string;
+  file_url?: string;
 }
 
 export interface CreateAbsentRequest {
@@ -88,6 +88,35 @@ export interface ReviewAbsentRequest {
 
 export interface ReviewAbsentResponse {
   data: string;
+  meta: {
+    code: string;
+    message: string;
+  };
+}
+
+export interface GetStudentAbsentRequest {
+  token: string;
+  class_id: string;
+  date?: string;
+  status?: AbsentStatus;
+  pageable_request?: {
+    page: string;
+    page_size: string;
+  };
+}
+
+export interface GetStudentAbsentResponse {
+  data: {
+    page_content: AbsentRequest[];
+    page_info: {
+      total_records: string;
+      total_page: string;
+      page_size: string;
+      page: string;
+      next_page: string;
+      previous_page: string | null;
+    };
+  };
   meta: {
     code: string;
     message: string;

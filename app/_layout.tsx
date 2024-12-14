@@ -12,7 +12,7 @@ export default function RootLayout() {
       if (!token) {
         router.replace("/sign-up");
       } else {
-        router.replace("/");
+        router.replace("/create-absent");
       }
       console.log(token);
     };
@@ -43,8 +43,8 @@ export default function RootLayout() {
         <Stack.Screen name="class-detail" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
-        <Stack.Screen name="create-absent" options={{ headerShown: false }} />
         <Stack.Screen name="review-absent" options={{ headerShown: false }} />
+        <Stack.Screen name="absent-tab" options={{ headerShown: false }} />
       </Stack>
     </UserProvider>
   );

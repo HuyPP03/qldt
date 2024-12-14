@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Modal,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -25,6 +27,7 @@ import {
 import { useRoute } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
+import { WebView } from "react-native-webview";
 
 interface reviewAbsentParams {
   classId: string;
@@ -46,11 +49,12 @@ const ReviewAbsentRequests = () => {
   ]);
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedFileUrl, setSelectedFileUrl] = useState<string | null>(null);
 
   const fetchAbsentRequests = useCallback(async () => {
     try {
       const req: GetAbsentRequest = {
-        token: "9wylwq", //token as string,
+        token: token as string,
         class_id: classId ?? "838688",
         date: filterDate?.toISOString(),
       };
@@ -86,7 +90,7 @@ const ReviewAbsentRequests = () => {
   const handleReview = async (requestId: string, status: AbsentStatus) => {
     try {
       const req: ReviewAbsentRequest = {
-        token: "9wylwq", // token as string,
+        token: token as string,
         request_id: requestId,
         status,
       };
@@ -147,7 +151,10 @@ const ReviewAbsentRequests = () => {
         </View>
         <Text style={styles.requestReason}>{item.reason}</Text>
         {item.file_url && (
-          <TouchableOpacity style={styles.fileButton}>
+          <TouchableOpacity
+            style={styles.fileButton}
+            onPress={() => setSelectedFileUrl(item.file_url as string)}
+          >
             <Text style={styles.fileButtonText}>Xem minh chứng</Text>
           </TouchableOpacity>
         )}
@@ -264,6 +271,29 @@ const ReviewAbsentRequests = () => {
             />
           )}
         />
+      )}
+      {selectedFileUrl && (
+        <Modal
+          visible={true}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setSelectedFileUrl(null)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <WebView
+                source={{ uri: selectedFileUrl }}
+                style={styles.filePreview}
+              />
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setSelectedFileUrl(null)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       )}
     </View>
   );
@@ -427,6 +457,35 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     justifyContent: "center",
     alignContent: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    width: "90%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    maxHeight: "80%",
+  },
+  filePreview: {
+    width: "100%",
+    height: 400,
+    marginBottom: 20,
+  },
+  closeButton: {
+    backgroundColor: "#CC0000",
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: "center",
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 14,
   },
 });
 
