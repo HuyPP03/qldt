@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,15 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
+  Alert,
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import request from "@/utility/request";
 import { useRouter } from "expo-router";
-
+import { SERVER_URL } from "@/utility/env";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 // Interface cho dữ liệu thông báo
 interface Notification {
   id: string;
@@ -53,9 +56,94 @@ const sampleNotifications: Notification[] = [
     course: "Lập trình Web",
   },
 ];
+export const useNotifications = () => {
+  const [token, setToken] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
+  const fetchUnreadNotificationCount = async () => {
+    const token = await AsyncStorage.getItem("userToken");
+    if (token) {
+      try {
+        const response = await request<{
+          success: boolean;
+          unreadCount: number;
+        }>(`${SERVER_URL}/it5023e/get_unread_notification_count`, {
+          method: "POST",
+          body: { token },
+        });
+
+        setUnreadCount(response.unreadCount);
+      } catch (error) {
+        console.error("Lỗi lấy số lượng thông báo chưa đọc:", error);
+      }
+    }
+  };
+
+  const fetchNotifications = async () => {
+    const token = await AsyncStorage.getItem("userToken");
+
+    try {
+      const response = await request<{
+        success: boolean;
+        data: Notification[];
+      }>(`${SERVER_URL}/it5023e/get_notifications`, {
+        method: "POST",
+        body: { token, index: 0, count: 4 },
+      });
+
+      setNotifications(response.data);
+      setUnreadCount(response.data.filter((noti) => !noti.read).length);
+    } catch (error) {
+      console.error("Lỗi lấy thông báo:", error);
+    }
+  };
+
+  const markNotificationAsRead = async (notificationId: string) => {
+    const token = await AsyncStorage.getItem("userToken");
+    try {
+      const response = await request(
+        `${SERVER_URL}/it5023e/mark_notification_as_read`,
+        {
+          method: "POST",
+          body: {
+            token,
+            notification_id: notificationId,
+          },
+        }
+      );
+
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((noti) =>
+          noti.id === notificationId ? { ...noti, read: true } : noti
+        )
+      );
+
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Lỗi đánh dấu đã đọc:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchUnreadNotificationCount();
+      fetchNotifications();
+    }
+  }, [token]);
+
+  return {
+    notifications,
+    unreadCount,
+    fetchNotifications,
+    fetchUnreadNotificationCount,
+    markNotificationAsRead,
+  };
+};
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { notifications, unreadCount, markNotificationAsRead } =
+    useNotifications();
 
   const renderNotificationIcon = (type: string) => {
     switch (type) {
@@ -73,6 +161,7 @@ export default function NotificationsScreen() {
   const renderNotification = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       style={[styles.notificationItem, !item.read && styles.unreadNotification]}
+      onPress={() => markNotificationAsRead(item.id)}
     >
       <View style={styles.notificationContent}>
         <View style={[styles.iconContainer, styles[`${item.type}Icon`]]}>
@@ -106,7 +195,7 @@ export default function NotificationsScreen() {
       </View>
 
       <FlatList
-        data={sampleNotifications}
+        data={notifications}
         renderItem={renderNotification}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}

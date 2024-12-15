@@ -21,6 +21,7 @@ import "moment/locale/vi";
 import CalendarPicker from "react-native-calendar-picker";
 import { Badge } from "react-native-paper";
 import { useRouter } from "expo-router";
+import { useNotifications } from "../notifications";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function HomeScreen() {
   const { userInfo, logout, loading } = useUser();
   const [selectedDate, setSelectedDate] = useState(moment());
   const [showCalendar, setShowCalendar] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(5);
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     if (isDrawerOpen && !isClosing) {
@@ -309,9 +310,9 @@ export default function HomeScreen() {
           >
             <View style={styles.notificationIconContainer}>
               <Ionicons name="notifications-outline" size={24} color="#555" />
-              {unreadNotifications > 0 && (
+              {unreadCount > 0 && (
                 <Badge style={styles.badge} size={22}>
-                  {unreadNotifications}
+                  {unreadCount}
                 </Badge>
               )}
             </View>

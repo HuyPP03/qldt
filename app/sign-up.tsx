@@ -12,7 +12,7 @@ import { Link } from "expo-router";
 import { useState, useRef, useEffect } from "react";
 import { router } from "expo-router";
 import { Alert } from "react-native";
-import { SERVER_URL } from "@env";
+import { SERVER_URL } from "@/utility/env";
 import request from "@/utility/request";
 
 export default function SignUp() {
@@ -20,7 +20,7 @@ export default function SignUp() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("student");
+  const [role, setRole] = useState("STUDENT");
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -67,21 +67,16 @@ export default function SignUp() {
           role,
         },
       });
-      if (signUpResponse.data) {
-        const verifyCode = signUpResponse.data.verify_code;
-      }
+      console.log(signUpResponse.data);
+
       console.log("respon data", signUpResponse);
       setShowModal(true);
-
-      if (signUpResponse.data) {
-      }
     } catch (error) {
       Alert.alert("Lỗi", "Đã có lỗi xảy ra khi đăng ký");
       console.log(error);
     } finally {
       setIsLoading(false);
     }
-    console.log({ firstName, lastName, email, password, role });
   };
 
   const handleVerifyEmail = async () => {
