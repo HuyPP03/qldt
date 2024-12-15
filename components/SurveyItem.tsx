@@ -1,56 +1,83 @@
+import { formatDate } from "@/utility/format-date";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
 interface SurveyItemProps {
+  id: string;
   surveyName: string;
   className: string;
-  deadline: string; //"YYYY-MM-DDTHH:MM:SS"
+  deadline: string; 
+  description: string;
+  fileUrl: string;
+  onPress: () => void;
+  onMenuPress?: () => void;
 }
 
-const SurveyItem: React.FC<SurveyItemProps> = ({ surveyName, className, deadline }) => {
-  const formatDeadline = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-    };
-    return new Date(dateString).toLocaleDateString("en-US", options);
+const SurveyItem: React.FC<SurveyItemProps> = ({
+  id,
+  surveyName,
+  className,
+  deadline,
+  description,
+  fileUrl,
+  onPress,
+  onMenuPress,
+}) => {
+  const router = useRouter();
+
+  const generateColor = (name: string) => {
+    let color = 0;
+    for (let i = 0; i < name.length; i++) {
+      color += name.charCodeAt(i);
+    }
+    return `hsl(${color % 360}, 80%, 60%)`;
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.avatarContainer}>
-        <Text style={styles.avatarText}>{surveyName[0].toUpperCase()}</Text>
+    <TouchableOpacity onPress={onPress} style={styles.surveyItem}>
+      <View style={[styles.iconContainer, { backgroundColor: generateColor(surveyName) }]}>
+        <Text style={styles.iconText}>{surveyName.charAt(0)}</Text>
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.surveyName}>{surveyName}</Text>
         <Text style={styles.className}>Lớp: {className}</Text>
-        <Text style={styles.deadline}>Hạn: {formatDeadline(deadline)}</Text>
+        <Text style={styles.deadline}>Hạn: {formatDate(deadline)}</Text>
       </View>
-    </View>
+      <TouchableOpacity onPress={onMenuPress} style={[styles.menuIcon, { padding: 10, paddingRight:0 }]}>
+        <Ionicons name="ellipsis-vertical" size={24} color="#666" /> 
+      </TouchableOpacity>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  surveyItem: {
+    width: "100%",
+    padding: 16,
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    backgroundColor: "#f9f9f9",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 2,
+    marginBottom: 16,
   },
-  avatarContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#CC0000",
-    alignItems: "center",
+  iconContainer: {
+    width: 65,
+    height: 65,
+    borderRadius: 5,
     justifyContent: "center",
-    marginRight: 15,
+    alignItems: "center",
+    marginRight: 16,
   },
-  avatarText: {
+  iconText: {
     color: "white",
     fontSize: 24,
     fontWeight: "bold",
@@ -59,16 +86,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   surveyName: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 18,
+    color: "#333",
+    fontWeight: "600",
   },
   className: {
     fontSize: 14,
     color: "#666",
+    marginTop: 2,
   },
   deadline: {
     fontSize: 14,
-    color: "#999",
+    color: "#666",
+    marginTop: 2,
+  },
+  description: {
+    fontSize: 14,
+    color: "#444",
+    marginTop: 4,
+  },
+  fileLink: {
+    fontSize: 14,
+    color: "#1E90FF",
+    marginTop: 4,
+  },
+  menuIcon: {
+    position: "absolute",
+    top: 10,
+    right: 10,
   },
 });
 

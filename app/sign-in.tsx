@@ -14,7 +14,7 @@ import request from "@/utility/request";
 import { UserInfo, useUser } from "@/app/contexts/UserContext";
 import { useRouter } from "expo-router";
 import React from "react";
-import { SERVER_URL } from "@env";
+import { SERVER_URL } from "@/utility/env";
 
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(-100);
@@ -65,6 +65,7 @@ export default function SignIn() {
 
   const handleSignIn = async () => {
     try {
+      console.log(SERVER_URL)
       const response = await request<any>(`${SERVER_URL}/it4788/login`, {
         method: "POST",
         body: { email, password, device_id: 1 },
