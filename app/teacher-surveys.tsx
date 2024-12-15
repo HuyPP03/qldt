@@ -57,7 +57,7 @@ export default function TeacherSurvey(){
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [confirmationModalVisible, setConfirmationModalVisible] = useState<boolean>(false);
-
+  
   const openModal = () => {
     setModalVisible(true);
     Animated.timing(slideAnim, {
@@ -217,7 +217,12 @@ export default function TeacherSurvey(){
                       <Ionicons name="trash-outline" size={24} color="red" />
                       <Text style={styles.optionText}>Xóa bài kiểm tra</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => {}} style={styles.modalOption}>
+                    <TouchableOpacity 
+                      onPress={() => router.replace({
+                        pathname: "/edit-survey",
+                        params: { assignmentId: selectedSurvey?.id, originalDeadline: selectedSurvey?.deadline, originalDescription: selectedSurvey?.description, classId: id },
+                      })} style={styles.modalOption}
+                    >
                       <Ionicons name="create-outline" size={24} color="black" />
                       <Text style={styles.optionText}>Chỉnh sửa bài kiểm tra</Text>
                     </TouchableOpacity>
@@ -263,6 +268,20 @@ export default function TeacherSurvey(){
                     deadline={survey.deadline}
                     description={survey.description}
                     fileUrl={survey.file_url}
+                    onPress={() => {
+                        router.push({
+                          pathname: "/teacher-survey-detail", 
+                          params: {
+                              id,
+                              surveyId: survey.id,
+                              surveyName: survey.title,
+                              deadline: survey.deadline,
+                              description: survey.description,
+                              fileUrl: survey.file_url,
+                            }
+                          }
+                        );
+                    }}
                     onMenuPress={() => {
                       setSelectedSurvey(survey)
                       openModal()

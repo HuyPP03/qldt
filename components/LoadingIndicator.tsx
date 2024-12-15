@@ -1,7 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, ActivityIndicator, StyleSheet } from 'react-native';
+import { Animated, ActivityIndicator, StyleSheet, Text } from 'react-native';
 
-const LoadingIndicator = () => {
+interface LoadingIndicatorProps {
+  loadingText?: string
+}
+
+const LoadingIndicator = ({ loadingText } : LoadingIndicatorProps) => {
   const opacityAnim = useRef(new Animated.Value(0)).current; 
 
   useEffect(() => {
@@ -24,6 +28,7 @@ const LoadingIndicator = () => {
   return (
     <Animated.View style={[styles.loadingContainer, { opacity: opacityAnim }]}>
       <ActivityIndicator size="large" color="#CC0000" />
+      <Text>{loadingText}</Text>
     </Animated.View>
   );
 };

@@ -1,3 +1,4 @@
+import { formatDate } from "@/utility/format-date";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -10,6 +11,7 @@ interface SurveyItemProps {
   deadline: string; 
   description: string;
   fileUrl: string;
+  onPress: () => void;
   onMenuPress?: () => void;
 }
 
@@ -20,35 +22,10 @@ const SurveyItem: React.FC<SurveyItemProps> = ({
   deadline,
   description,
   fileUrl,
+  onPress,
   onMenuPress,
 }) => {
   const router = useRouter();
-
-  const handlePress = () => {
-    router.push({
-      pathname: "/survey-detail", // Navigate to the detail screen
-      params: {
-          id,
-          surveyName,
-          className,
-          deadline,
-          description,
-          fileUrl,
-        }
-      }
-    );
-  };
-
-  const formatDeadline = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-    };
-    return new Date(dateString).toLocaleDateString("vi-VN", options);
-  };
 
   const generateColor = (name: string) => {
     let color = 0;
@@ -59,14 +36,14 @@ const SurveyItem: React.FC<SurveyItemProps> = ({
   };
 
   return (
-    <TouchableOpacity onPress={handlePress} style={styles.surveyItem}>
+    <TouchableOpacity onPress={onPress} style={styles.surveyItem}>
       <View style={[styles.iconContainer, { backgroundColor: generateColor(surveyName) }]}>
         <Text style={styles.iconText}>{surveyName.charAt(0)}</Text>
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.surveyName}>{surveyName}</Text>
         <Text style={styles.className}>Lớp: {className}</Text>
-        <Text style={styles.deadline}>Hạn: {formatDeadline(deadline)}</Text>
+        <Text style={styles.deadline}>Hạn: {formatDate(deadline)}</Text>
       </View>
       <TouchableOpacity onPress={onMenuPress} style={[styles.menuIcon, { padding: 10, paddingRight:0 }]}>
         <Ionicons name="ellipsis-vertical" size={24} color="#666" /> 

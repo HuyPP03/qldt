@@ -23,21 +23,19 @@ import { useRoute } from "@react-navigation/native";
 import { Toast } from "@/components/Toast";
 import LoadingIndicator from "@/components/LoadingIndicator";
 
-export default function CreateSurvey() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+export default function EditSurvey() {
+  const route = useRoute();
+  const { assignmentId, classId, originalDeadline, originalDescription } = route.params as { assignmentId: string, classId: string, originalDeadline: string, originalDescription: string };
+  
+  const [description, setDescription] = useState(originalDescription);
   const [file, setFile] = useState<any>(null);
-  const [deadline, setDeadline] = useState(new Date());
+  const [deadline, setDeadline] = useState(new Date(originalDeadline));
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const { token, userInfo } = useUser();
-
-  const route = useRoute();
-
-  const { id } = route.params as { id: string };
 
   useEffect(() => {
     if (userInfo?.role !== "LECTURER") {
@@ -77,13 +75,17 @@ export default function CreateSurvey() {
       }
     } catch (error) {
       console.error("Error selecting the file:", error);
-    } 
+    }
   };
 
-  const handleCreateSurvey = async () => {
-    if (!title || !description || !file || !deadline) {
-      setError("Hãy điền đầy đủ thông tin");
-      setTimeout(() => setError(""), 3000);
+  const handleEditSurvey = async () => {
+    const isDescriptionSame = description === originalDescription;
+    const isDeadlineSame = deadline.toISOString() === new Date(originalDeadline).toISOString();
+    const isFileSame = file === null; 
+
+    if (isDescriptionSame && isDeadlineSame && isFileSame) {
+      setError("Không có thay đổi nào để cập nhật");
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
@@ -97,21 +99,21 @@ export default function CreateSurvey() {
       const formData = new FormData();
       const localDeadline = new Date(deadline.getTime() + 7 * 60 * 60 * 1000);
       const formattedDeadline = localDeadline.toISOString().split(".")[0];
-      console.log(formattedDeadline)
 
       if (file) {
         formData.append("file", file);
-      } else {
-        throw new Error("Invalid file type.");
+      } 
+      if(deadline){
+        formData.append("deadline", formattedDeadline);
+      }
+      if(description){ 
+        formData.append("description", description);
       }
 
       formData.append("token", token!);
-      formData.append("classId", id);
-      formData.append("title", title);
-      formData.append("deadline", formattedDeadline);
-      formData.append("description", description);
+      formData.append("assignmentId", assignmentId);
 
-      const response = await request(`${SERVER_URL}/it5023e/create_survey`, {
+      const response = await request(`${SERVER_URL}/it5023e/edit_survey`, {
         method: "POST",
         headers: {
           "Content-Type": "multipart/form-data",
@@ -121,10 +123,11 @@ export default function CreateSurvey() {
 
       router.push({
         pathname: "/class-detail",
-        params: { id },
+        params: { id: classId },
       });
     } catch (error) {
       setError("Không tạo được bài kiểm tra");
+      console.log(error)
       setTimeout(() => setError(""), 3000);
     } finally {
       setLoading(false);
@@ -139,27 +142,19 @@ export default function CreateSurvey() {
           onPress={() =>
             router.push({
               pathname: "/class-detail",
-              params: { id: id },
+              params: { id: classId },
             })
           }
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Tạo Bài Kiểm Tra</Text>
+        <Text style={styles.headerText}>Chỉnh Sửa Bài Kiểm Tra</Text>
       </View>
-      {loading ? <LoadingIndicator loadingText="Đang tạo bài kiểm tra"/> : (
+      {loading ? <LoadingIndicator loadingText="Đang sửa bài kiểm tra"/> : (
       <ScrollView style={styles.formContainer}>
         <TextInput
-          style={styles.input}
-          placeholder="Tên bài kiểm tra *"
-          placeholderTextColor="#CC0000"
-          value={title}
-          onChangeText={setTitle}
-        />
-
-        <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Mô tả *"
+          placeholder="Chỉnh sửa mô tả *"
           placeholderTextColor="#CC0000"
           value={description}
           onChangeText={setDescription}
@@ -177,7 +172,7 @@ export default function CreateSurvey() {
         </TouchableOpacity>
 
         <View style={styles.timePickerContainer}>
-          <Text style={styles.label}>Hạn chót:</Text>
+          <Text style={styles.label}>Thay đổi hạn chót:</Text>
           <TouchableOpacity
             style={styles.timeInput}
             onPress={() => setShowDeadlinePicker(true)}
@@ -223,9 +218,9 @@ export default function CreateSurvey() {
 
         <TouchableOpacity
           style={styles.createButton}
-          onPress={handleCreateSurvey}
+          onPress={handleEditSurvey}
         >
-          <Text style={styles.buttonText}>Tạo</Text>
+          <Text style={styles.buttonText}>Chỉnh sửa</Text>
         </TouchableOpacity>
       </ScrollView>
       )}

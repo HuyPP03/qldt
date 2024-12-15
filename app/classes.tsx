@@ -75,7 +75,7 @@ export default function ClassesScreen() {
 
   const [refreshing, setRefreshing] = useState<boolean>(false); 
 
-  const [pageSize] = useState<number>(1000); 
+  const [pageSize] = useState<number>(100); 
 
   const { userInfo } = useUser();
   const role = userInfo?.role;
@@ -348,7 +348,7 @@ export default function ClassesScreen() {
             ))}
           </View>
           
-          {/*<View style={styles.paginationContainer}>
+          {<View style={styles.paginationContainer}>
             {pageInfo && (
               <View style={styles.pagination}>
                 <TouchableOpacity
@@ -376,7 +376,7 @@ export default function ClassesScreen() {
                 </TouchableOpacity>
               </View>
             )}
-          </View>*/}
+          </View>}
         </ScrollView>
       )}
 
