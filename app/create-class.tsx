@@ -86,6 +86,7 @@ export default function CreateClass() {
 
       router.back();
     } catch (error) {
+      console.log(error);
       setErrorMessage("Tạo lớp không thành công. Vui lòng thử lại sau.");
       setTimeout(() => setErrorMessage(""), 3000);
     }

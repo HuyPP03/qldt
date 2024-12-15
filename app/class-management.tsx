@@ -10,8 +10,7 @@ import {
 } from "react-native";
 import { Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import { router } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import request from "../utility/request";
 import { useUser } from "./contexts/UserContext";
@@ -66,7 +65,7 @@ const Toast = ({ message }: { message: string }) => {
 
 export default function ClassManagement() {
   const { userInfo } = useUser();
-  const navigation = useNavigation();
+  const router = useRouter();
   const [classes, setClasses] = useState<any[]>([]);
   const [classId, setClassId] = useState("");
   const [selectedClassIndex, setSelectedClassIndex] = useState<number | null>(
@@ -111,7 +110,7 @@ export default function ClassManagement() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
