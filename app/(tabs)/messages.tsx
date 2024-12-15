@@ -8,62 +8,74 @@ import {
   StatusBar,
   TextInput,
   TouchableOpacity,
+  RefreshControl,
+  Modal,
 } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
-
-interface ChatUser {
-  id: string;
-  name: string;
-  lastMessage: string;
-  timestamp: Date;
-  avatar: string;
-  unreadCount?: number;
-}
+import { ChatConversation } from "../interfaces/chat/chat.interface";
+import { Ionicons } from "@expo/vector-icons";
+import CreateChatModal from "../create-chat-modal";
+import { useMessageContext } from "../contexts/MessageContext";
 
 export default function MessagesScreen() {
   const router = useRouter();
 
-  const [chatUsers, setChatUsers] = React.useState<ChatUser[]>([
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      lastMessage: "Hẹn gặp lại bạn nhé!",
-      timestamp: new Date(),
-      avatar: "👤",
-      unreadCount: 2,
-    },
-    {
-      id: "2",
-      name: "Trần Thị B",
-      lastMessage: "Ok, đã nhận được rồi",
-      timestamp: new Date(),
-      avatar: "👤",
-    },
-    // Thêm người dùng khác nếu cần
-  ]);
+  const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [refreshing, setRefreshing] = React.useState<boolean>(false);
+  const [modalVisible, setModalVisible] = React.useState<boolean>(false);
+  const [curConversations, setCurConversations] = React.useState<
+    ChatConversation[] | null
+  >(null);
+  const { conversations, fetchConversations } = useMessageContext();
 
-  const handleChatPress = (userId: string) => {
+  React.useEffect(() => {
+    setLoading(true);
+    setCurConversations(conversations);
+    setLoading(false);
+  }, [conversations]);
+
+  const onRefresh = React.useCallback(() => {
+    console.log("Refreshing...");
+    setRefreshing(true);
+    fetchConversations().then(() => {
+      setRefreshing(false);
+      console.log("Refresh complete");
+    });
+  }, []);
+
+  const handleChatPress = (
+    conversationId: string,
+    partner: { id: string; name: string; avatar: string }
+  ) => {
     router.push({
       pathname: "/chat",
-      params: { id: userId },
+      params: {
+        id: conversationId,
+        partnerId: partner.id,
+        partnerName: partner.name,
+        partnerAvatar: partner.avatar,
+      },
     });
   };
 
-  const renderChatUser = ({ item }: { item: ChatUser }) => (
+  const renderChatUser = ({ item }: { item: ChatConversation }) => (
     <TouchableOpacity
       style={styles.userContainer}
-      onPress={() => handleChatPress(item.id)}
+      onPress={() => handleChatPress(item.id, item.partner)}
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
-        <Text style={styles.avatar}>{item.avatar}</Text>
+        <Text style={styles.avatar}>{item.partner.avatar}</Text>
       </View>
       <View style={styles.userInfo}>
         <View style={styles.userHeader}>
-          <Text style={styles.userName}>{item.name}</Text>
+          <Text style={styles.userName}>{item.partner.name}</Text>
           <Text style={styles.timestamp}>
-            {item.timestamp.toLocaleTimeString([], {
+            {new Date(
+              item.last_message?.created_at as string
+            ).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
@@ -71,13 +83,15 @@ export default function MessagesScreen() {
         </View>
         <View style={styles.messagePreview}>
           <Text numberOfLines={1} style={styles.lastMessage}>
-            {item.lastMessage}
+            {item.last_message?.message}
           </Text>
-          {item.unreadCount && (
+          {item.last_message?.unread ? (
             <View style={styles.unreadBadge}>
-              <Text style={styles.unreadCount}>{item.unreadCount}</Text>
+              <Text style={styles.unreadCount}>
+                {item.last_message?.unread}
+              </Text>
             </View>
-          )}
+          ) : null}
         </View>
       </View>
     </TouchableOpacity>
@@ -91,7 +105,14 @@ export default function MessagesScreen() {
         barStyle="light-content"
       />
       <View style={styles.header}>
+        <View style={styles.headerLeft} />
         <Text style={styles.headerText}>Tin nhắn</Text>
+        <TouchableOpacity
+          style={styles.plusButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <Ionicons name="add" size={24} color="white" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
@@ -99,7 +120,7 @@ export default function MessagesScreen() {
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm kiếm tin nhắn..."
+            placeholder="Tìm kiếm..."
             placeholderTextColor="#666"
           />
         </View>
@@ -107,12 +128,22 @@ export default function MessagesScreen() {
 
       <View style={styles.content}>
         <FlatList
-          data={chatUsers}
+          data={curConversations}
           renderItem={renderChatUser}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.usersList}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       </View>
+
+      <CreateChatModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -126,9 +157,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#CC0000",
     padding: 15,
     paddingTop: Platform.OS === "ios" ? 50 : 30,
-    alignItems: "center",
     flexDirection: "row",
-    justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "space-between",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -143,6 +174,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  headerLeft: {
+    width: 24,
+  },
+  plusButton: {},
   content: {
     flex: 1,
   },
@@ -236,5 +271,41 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#333",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  contactContainer: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  contactName: {
+    fontSize: 16,
+  },
+  closeButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "#CC0000",
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 16,
   },
 });
