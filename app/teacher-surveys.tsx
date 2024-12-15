@@ -23,6 +23,7 @@ import { SERVER_URL } from "@/utility/env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import LoadingIndicator from "@/components/LoadingIndicator";
+import { Toast } from "@/components/Toast";
 interface SurveyData{
     id: string;
     title: string;
@@ -48,6 +49,7 @@ export default function TeacherSurvey(){
   const [surveys, setSurveys] = useState<SurveyData[]>([]); 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null); 
+  const [success, setSuccess] = useState<string | null>(null); 
   const [selectedSurvey, setSelectedSurvey] = useState<SurveyData>();
   const [filteredSurveys, setFilteredSurveys] = useState<SurveyData[]>([]);
   const [searchText, setSearchText] = useState("");
@@ -115,6 +117,7 @@ export default function TeacherSurvey(){
       setError("Something went wrong");
     } finally {
       setConfirmationModalVisible(false);
+      setSuccess("Xóa bài kiểm tra thành công")
     }
   };
 
@@ -297,6 +300,8 @@ export default function TeacherSurvey(){
               })}
               iconName="add"
             />
+            {error ? <Toast message={error} onDismiss={() => setError(null)} /> : null}
+            {success ? <Toast type="success" message={success} onDismiss={() => setSuccess(null)} /> : null}
           </View>
     )
 }
