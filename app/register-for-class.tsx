@@ -102,7 +102,7 @@ export default function RegisterForClass() {
   const searchClass = async () => {
     try {
       const response: any = await request(
-        "http://160.30.168.228:8080/it5023e/get_basic_class_info",
+        `${SERVER_URL}/it5023e/get_basic_class_info`,
         {
           body: {
             token,
