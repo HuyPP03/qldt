@@ -43,6 +43,7 @@
     "react-native": "0.76.5",
     "react-native-calendar-picker": "^8.0.5",
     "react-native-context-menu-view": "^1.16.0",
+    "react-native-document-picker": "^9.3.1",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-hold-menu": "^0.1.6",
     "react-native-paper": "^5.12.5",
@@ -51,7 +52,10 @@
     "react-native-screens": "^4.0.0",
     "react-native-web": "~0.19.13",
     "sockjs-client": "^1.6.1",
-    "text-encoding-polyfill": "^0.6.7"
+    "text-encoding-polyfill": "^0.6.7",
+    "react-native-tab-view": "^4.0.5",
+    "react-native-webview": "^13.12.5",
+    "react-native-pager-view": "6.5.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
