@@ -70,6 +70,8 @@ export default function SignIn() {
         body: { email, password, device_id: 1 },
       });
 
+      console.log(response);
+
       await AsyncStorage.setItem("userToken", response.data.token);
       setUserInfo(response.data);
       setToken(response.data.token);
