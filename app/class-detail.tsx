@@ -16,6 +16,8 @@ import { Toast } from "@/components/Toast";
 import TeacherSurveys from "./teacher-surveys";
 import StudentSurveys from "./student-surveys";
 import Files from "./files";
+import GetStudentAbsentRequests from "./get-student-absent";
+import ReviewAbsentRequests from "./review-absent";
 
 
 export default function ClassDetail() {
@@ -40,8 +42,12 @@ export default function ClassDetail() {
         return (
           <Files/>
         );
-      case "Ứng dụng":
-        return <Text>Nội dung Ứng dụng</Text>;
+      case "Nghỉ học":
+        return userInfo?.role === "LECTURER" ? (
+          <ReviewAbsentRequests classId={id} />
+        ) : (
+          <StudentSurveys/>
+        );
       default:
         return null;
     }
@@ -56,7 +62,7 @@ export default function ClassDetail() {
         <Text style={styles.headerText}> Lớp {id}</Text>
       </View>
       <View style={styles.tabContainer}>
-        {["Bài kiểm tra", "Tệp", "Ứng dụng"].map((tab) => (
+        {["Bài kiểm tra", "Tệp", "Nghỉ học"].map((tab) => (
           <TouchableOpacity
             key={tab}
             onPress={() => setActiveTab(tab)}

@@ -176,6 +176,11 @@ export default function TeacherSurvey(){
   
     return loading ? (
         <LoadingIndicator/>
+    )
+    : filteredSurveys.length === 0 ? (
+      <View style={styles.noSurveysContainer}>
+        <Text style={styles.noSurveysText}>Không có bài kiểm tra nào</Text>
+      </View>
     ) : (
         <View style={styles.container}>
             <View style={styles.searchSortContainer}>
@@ -454,5 +459,16 @@ const styles = StyleSheet.create({
     optionText: {
         fontSize: 16,
         marginLeft: 10,
+    },
+    noSurveysContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 20,
+    },
+    noSurveysText: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: "#333",
     },
 });

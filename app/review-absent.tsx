@@ -33,11 +33,10 @@ interface reviewAbsentParams {
   classId: string;
 }
 
-const ReviewAbsentRequests = () => {
-  const router = useRouter();
-  const route = useRoute();
-  const { classId } = route.params as reviewAbsentParams;
+const ReviewAbsentRequests = ({classId}: reviewAbsentParams) => {
   const { token } = useUser();
+
+  console.log( classId )
 
   const [absentRequests, setAbsentRequests] = useState<AbsentRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,11 +52,14 @@ const ReviewAbsentRequests = () => {
 
   const fetchAbsentRequests = useCallback(async () => {
     try {
+      
+      
       const req: GetAbsentRequest = {
         token: token as string,
-        class_id: classId ?? "838688",
-        date: filterDate?.toISOString(),
+        class_id: classId,
+        date: filterDate?.toISOString().split("T")[0],
       };
+      console.log(req)
       const response: GetAbsentResponse = await request(
         `${SERVER_URL}/it5023e/get_absence_requests`,
         {
@@ -221,15 +223,6 @@ const ReviewAbsentRequests = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Xem danh sách xin nghỉ</Text>
-      </View>
       <TouchableOpacity
         style={styles.timeInput}
         onPress={() => setShowDatePicker(true)}
