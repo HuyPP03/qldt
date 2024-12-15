@@ -12,7 +12,7 @@ export default function RootLayout() {
       if (!token) {
         router.replace("/sign-up");
       } else {
-        router.replace("/create-absent");
+        router.replace("/absent-tab");
       }
       console.log(token);
     };

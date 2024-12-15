@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   View,
   Text,
@@ -13,9 +13,6 @@ import GetStudentAbsentRequests from "./get-student-absent";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-const CreateAbsentTab = () => <CreateAbsent />;
-const GetStudentAbsentRequestsTab = () => <GetStudentAbsentRequests />;
-
 export default function AbsentTab() {
   const router = useRouter();
   const layout = useWindowDimensions();
@@ -25,12 +22,33 @@ export default function AbsentTab() {
     { key: "getStudentAbsentRequests", title: "Danh sách đơn" },
   ]);
 
+  const getStudentAbsentRequestsRef = useRef<any>(null);
+
+  const handleRequestCreated = () => {
+    setIndex(1);
+    if (getStudentAbsentRequestsRef.current) {
+      getStudentAbsentRequestsRef.current.refreshRequests();
+    }
+  };
+
+  const onRequestCreated = (date: string) => {
+    if (getStudentAbsentRequestsRef.current) {
+      const isExisted = getStudentAbsentRequestsRef.current.createRequest(date);
+      return isExisted;
+    }
+  };
+
   const renderScene = ({ route }: { route: { key: string } }) => {
     switch (route.key) {
       case "createAbsent":
-        return <CreateAbsent />;
+        return (
+          <CreateAbsent
+            onRequestCreated={handleRequestCreated}
+            onCreateRequest={onRequestCreated}
+          />
+        );
       case "getStudentAbsentRequests":
-        return <GetStudentAbsentRequests />;
+        return <GetStudentAbsentRequests ref={getStudentAbsentRequestsRef} />;
       default:
         return null;
     }

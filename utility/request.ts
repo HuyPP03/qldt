@@ -39,7 +39,14 @@ async function request<T>(
 
     const response = await fetch(url, finalOptions);
 
-    const data = await response.json();
+    const contentType = response.headers.get("Content-Type");
+    let data;
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+
     return data as T;
   } catch (error) {
     if (error instanceof Error) {

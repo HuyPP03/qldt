@@ -8,8 +8,6 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import request from "../utility/request";
@@ -58,7 +56,13 @@ const Toast = ({ message }: { message: string }) => {
   );
 };
 
-export default function CreateAbsent() {
+export default function CreateAbsent({
+  onRequestCreated,
+  onCreateRequest,
+}: {
+  onRequestCreated: () => void;
+  onCreateRequest: (date: string) => boolean;
+}) {
   const [classId, setClassId] = useState("838688");
   const [startDate, setStartDate] = useState(new Date());
   const [errorMessage, setErrorMessage] = useState("");
@@ -70,6 +74,13 @@ export default function CreateAbsent() {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleCreateAbsent = async () => {
+    const existedDate = onCreateRequest(date.toISOString().split("T")[0]);
+    if (existedDate) {
+      setErrorMessage("Đơn nghỉ phép cho ngày này đã tồn tại!");
+      setTimeout(() => setErrorMessage(""), 3000);
+      return;
+    }
+
     const token = await AsyncStorage.getItem("userToken");
     try {
       const data: CreateAbsentRequest = {
@@ -82,7 +93,7 @@ export default function CreateAbsent() {
           ? {
               uri: evidence.uri,
               name: evidence.name,
-              type: evidence.type,
+              type: evidence.mimeType || "application/octet-stream",
             }
           : null,
       };
@@ -104,17 +115,18 @@ export default function CreateAbsent() {
           body: formData,
           headers: {
             Accept: "application/json",
-            "Content-Type": "multipart/form-data",
+            //"Content-Type": "multipart/form-data",
           },
         }
       );
+      console.log(response);
 
       // TODO: Create common code to handle error
       if (response.meta.code === "1004") {
         throw new Error(response.meta.message);
       }
 
-      router.back();
+      onRequestCreated();
     } catch (error: any) {
       setErrorMessage(
         error.message ?? "Có lỗi xảy ra khi tạo đơn nghỉ phép, vui lòng thử lại"
@@ -169,16 +181,6 @@ export default function CreateAbsent() {
 
   return (
     <View style={styles.container}>
-      {/* <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Tạo đơn nghỉ phép</Text>
-      </View> */}
-
       <ScrollView style={styles.formContainer}>
         <TextInput
           style={[styles.input, styles.inputText]}

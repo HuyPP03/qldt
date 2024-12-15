@@ -1,4 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 import {
   View,
   Text,
@@ -22,9 +27,9 @@ import {
 } from "./interfaces/absent/absent.interface";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WebView } from "react-native-webview";
+import { create } from "react-test-renderer";
 
-export default function GetStudentAbsentRequests() {
-  const router = useRouter();
+const GetStudentAbsentRequests = forwardRef((props, ref) => {
   const [absentRequests, setAbsentRequests] = useState<AbsentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -81,8 +86,21 @@ export default function GetStudentAbsentRequests() {
   const onRefresh = () => {
     setRefreshing(true);
     setPage(0);
+    fetchAbsentRequests();
     setRefreshing(false);
   };
+
+  const checkExistRequest = (date: string) => {
+    const request = absentRequests.find(
+      (request) => request.absence_date === date
+    );
+    return !!request;
+  };
+
+  useImperativeHandle(ref, () => ({
+    refreshRequests: onRefresh,
+    createRequest: checkExistRequest,
+  }));
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -156,15 +174,6 @@ export default function GetStudentAbsentRequests() {
 
   return (
     <View style={styles.container}>
-      {/* <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Đơn xin nghỉ</Text>
-      </View> */}
       {loading && page === 1 ? (
         <ActivityIndicator size="large" color="#CC0000" />
       ) : (
@@ -228,7 +237,7 @@ export default function GetStudentAbsentRequests() {
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -392,3 +401,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
+export default GetStudentAbsentRequests;
