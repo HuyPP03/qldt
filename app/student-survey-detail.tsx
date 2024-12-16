@@ -27,26 +27,26 @@ interface SubmissionResponse {
 }
 
 interface SubmissionData {
-  id: number;                
-  assignment_id: number;     
-  submission_time: string;  
-  grade: number | null;      
-  file_url: string;  
-  text_response: string;    
-  student_account: StudentAccount;  
+  id: number;
+  assignment_id: number;
+  submission_time: string;
+  grade: number | null;
+  file_url: string;
+  text_response: string;
+  student_account: StudentAccount;
 }
 
 interface StudentAccount {
-  account_id: string;        
-  last_name: string;        
-  first_name: string;       
-  email: string;             
-  student_id: string;       
+  account_id: string;
+  last_name: string;
+  first_name: string;
+  email: string;
+  student_id: string;
 }
 
 interface MetaData {
-  code: string;              
-  message: string;          
+  code: string;
+  message: string;
 }
 
 export default function StudentSurveysDetail() {
@@ -59,16 +59,23 @@ export default function StudentSurveysDetail() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const route = useRoute();
-  const { id, surveyId, surveyName, deadline, description, fileUrl, isSubmitted } =
-    route.params as {
-      id: string;
-      surveyId: string;
-      surveyName: string;
-      deadline: string;
-      description: string;
-      fileUrl: string;
-      isSubmitted: string;
-    };
+  const {
+    id,
+    surveyId,
+    surveyName,
+    deadline,
+    description,
+    fileUrl,
+    isSubmitted,
+  } = route.params as {
+    id: string;
+    surveyId: string;
+    surveyName: string;
+    deadline: string;
+    description: string;
+    fileUrl: string;
+    isSubmitted: string;
+  };
 
   const formatDeadline = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -83,45 +90,50 @@ export default function StudentSurveysDetail() {
 
   const formattedDeadline = formatDeadline(deadline);
 
-  console.log(surveyId);
+  console.log(submission);
 
   const renderContent = () => {
     switch (activeTab) {
       case "Mô tả":
         return (
           <View style={styles.container}>
-            {!submission && (<View style={styles.warningContainer}>
-                <Ionicons name="alert-circle-outline" size={24} color="#FF9800" />
+            {!submission && (
+              <View style={styles.warningContainer}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={24}
+                  color="#FF9800"
+                />
                 <Text style={styles.warningText}>Chưa nộp bài</Text>
-            </View>)}
+              </View>
+            )}
             <ScrollView style={styles.content}>
               <View style={styles.nameDeadlineContainer}>
                 <Text style={styles.title}>{surveyName}</Text>
                 {isSubmitted === "true" ? (
                   <>
-                  <Text style={styles.deadline}>
-                    Đã nộp: {convertToVietnameseTime(submission!.submission_time)}
-                  </Text>
-                  {submission!.grade && (
                     <Text style={styles.deadline}>
-                      Điểm: {submission!.grade}
+                      Đã nộp:{" "}
+                      {convertToVietnameseTime(submission!.submission_time)}
                     </Text>
-                  )}
+                    {submission!.grade && (
+                      <Text style={styles.deadline}>
+                        Điểm: {submission!.grade}
+                      </Text>
+                    )}
                   </>
-                  ) : (
-                    <Text style={styles.deadline}>
-                      Hạn nộp: {formattedDeadline}
-                    </Text>
-                  )
-                  
-                }
+                ) : (
+                  <Text style={styles.deadline}>
+                    Hạn nộp: {formattedDeadline}
+                  </Text>
+                )}
               </View>
-  
+
               <Text style={styles.sectionHeading}>Hướng dẫn</Text>
               <ScrollView style={styles.descriptionContainer}>
                 <Text style={styles.descriptionText}>{description}</Text>
               </ScrollView>
-  
+
               <Text style={styles.sectionHeading}>Bài tập của tôi</Text>
               {fileUrl && (
                 <TouchableOpacity
@@ -140,68 +152,81 @@ export default function StudentSurveysDetail() {
                 </TouchableOpacity>
               )}
             </ScrollView>
-            {!submission ? (<FloatingActionButton
-              onPress={() =>
-                router.replace({
-                  pathname: "/submit-survey",
-                  params: {
-                    assignmentId: surveyId,
-                    classId: id,
-                  },
-                })
-              }
-              text="Nộp bài"
-            />) : (<FloatingActionButton
-              onPress={() =>
-                {setActiveTab("Bài nộp của tôi")}
-              }
-              text="Xem bài nộp"
-            />)}
+            {!submission ? (
+              <FloatingActionButton
+                onPress={() =>
+                  router.replace({
+                    pathname: "/submit-survey",
+                    params: {
+                      assignmentId: surveyId,
+                      classId: id,
+                    },
+                  })
+                }
+                text="Nộp bài"
+              />
+            ) : (
+              <FloatingActionButton
+                onPress={() => {
+                  setActiveTab("Bài nộp của tôi");
+                }}
+                text="Xem bài nộp"
+              />
+            )}
           </View>
         );
       case "Bài nộp của tôi":
         return (
           <View style={styles.container}>
-          { submission ?
-          (<ScrollView
-            contentContainerStyle={styles.content}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-            }
-          >
-            <View style={styles.container}>
-                            <Text style={styles.modalText}>
-                              Bài nộp của {submission.student_account.first_name}{" "}
-                              {submission.student_account.last_name}
-                            </Text>
-            
-                            <View style={styles.sectionHeader}>
-                              <Text style={styles.sectionHeaderText}>
-                                Nội dung phản hồi:
-                              </Text>
-                            </View>
-                            <ScrollView style={styles.textResponseContainer}>
-                              <Text style={styles.responseText}>
-                                {submission.text_response}
-                              </Text>
-                            </ScrollView>
-            
-                            {submission.file_url && (
-                              <TouchableOpacity
-                                style={styles.fileLinkButton}
-                                onPress={() => Linking.openURL(submission.file_url)}
-                              >
-                                <Text style={styles.fileLinkText}>
-                                  Tải về bài nộp của tôi
-                                </Text>
-                              </TouchableOpacity>
-                            )}
-                          </View>
-          </ScrollView>) :
-          (<View style={styles.warningContainer}>
-            <Ionicons name="alert-circle-outline" size={24} color="#FF9800" />
-            <Text style={styles.warningText}>Chưa nộp bài</Text>
-        </View>)}
+            {submission ? (
+              <ScrollView
+                contentContainerStyle={styles.content}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                  />
+                }
+              >
+                <View style={styles.container}>
+                  <Text style={styles.modalText}>
+                    Bài nộp của {submission.student_account.first_name}{" "}
+                    {submission.student_account.last_name}
+                  </Text>
+
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionHeaderText}>
+                      Nội dung phản hồi:
+                    </Text>
+                  </View>
+                  <ScrollView style={styles.textResponseContainer}>
+                    <Text style={styles.responseText}>
+                      {submission.text_response}
+                    </Text>
+                  </ScrollView>
+
+                  {submission.file_url && (
+                    <TouchableOpacity
+                      style={styles.fileLinkButton}
+                      onPress={() => Linking.openURL(submission.file_url)}
+                    >
+                      <Text style={styles.fileLinkText}>
+                        Tải về bài nộp của tôi
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </ScrollView>
+            ) : (
+              <View style={styles.warningContainer}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={24}
+                  color="#FF9800"
+                />
+                <Text style={styles.warningText}>Chưa nộp bài</Text>
+              </View>
+            )}
           </View>
         );
       default:
@@ -229,7 +254,7 @@ export default function StudentSurveysDetail() {
 
       if (data.meta.code === "1000") {
         setSubmission(data.data);
-      } 
+      }
     } catch (error) {
       setError("Unable to fetch submission response");
     } finally {
@@ -238,11 +263,9 @@ export default function StudentSurveysDetail() {
     }
   };
 
-  console.log(submission)
-
   useEffect(() => {
     fetchSubmissions();
-    }, [surveyId]);
+  }, [surveyId]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -395,19 +418,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   warningContainer: {
-    backgroundColor: "#FFF9C4", 
+    backgroundColor: "#FFF9C4",
     paddingVertical: 10,
     paddingHorizontal: 15,
     marginTop: 0,
-    flexDirection: "row", 
+    flexDirection: "row",
     alignItems: "center",
   },
-  
+
   warningText: {
     fontSize: 16,
     color: "#000000",
     fontWeight: "bold",
-    marginLeft: 10, 
+    marginLeft: 10,
   },
   fileLinkButton: {
     backgroundColor: "#CC0000",

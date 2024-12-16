@@ -24,7 +24,12 @@ import AbsentTab from "./absent-tab";
 export default function ClassDetail() {
   const route = useRoute();
   const router = useRouter();
-  const { id, tab } = route.params as { id: string; tab?: string };
+  const { id, tab, isList, requestId } = route.params as {
+    id: string;
+    tab?: string;
+    isList?: boolean;
+    requestId?: string;
+  };
   const [activeTab, setActiveTab] = useState(tab || "Bài kiểm tra");
   const [error, setError] = useState<string | null>(null);
   const { userInfo } = useUser();
@@ -43,7 +48,7 @@ export default function ClassDetail() {
         return userInfo?.role === "LECTURER" ? (
           <ReviewAbsentRequests classId={id} />
         ) : (
-          <AbsentTab classId={id} />
+          <AbsentTab classId={id} isList={isList} requestId={requestId} />
         );
       default:
         return null;

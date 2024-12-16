@@ -93,7 +93,7 @@ export default function NotificationsScreen() {
     }
   };
 
-  const markNotificationAsRead = async (notificationId: number) => {
+  const markNotificationAsRead = async (notification: Notification) => {
     try {
       const response = await request(
         `${SERVER_URL}/it5023e/mark_notification_as_read`,
@@ -101,14 +101,14 @@ export default function NotificationsScreen() {
           method: "POST",
           body: {
             token,
-            notification_id: notificationId,
+            notification_id: notification.id,
           },
         }
       );
       if (response) {
         setNotifications((prevNotifications) =>
           prevNotifications.map((noti: Notification) =>
-            noti.id === notificationId ? { ...noti, status: "READ" } : noti
+            noti.id === notification.id ? { ...noti, status: "READ" } : noti
           )
         );
 
@@ -116,6 +116,7 @@ export default function NotificationsScreen() {
       } else {
         console.error("Lỗi đánh dấu đã đọc:", response);
       }
+      router.push(JSON.parse(notification?.message || "{}"));
     } catch (error) {
       console.error("Lỗi đánh dấu đã đọc:", error);
     }
@@ -143,6 +144,21 @@ export default function NotificationsScreen() {
     }
   };
 
+  const renderMessage = (type: string) => {
+    switch (type) {
+      case "ABSENCE":
+        return "Đơn xin phép nghỉ học";
+      case "ACCEPT_ABSENCE_REQUEST":
+        return "Cho phép nghỉ học";
+      case "REJECT_ABSENCE_REQUEST":
+        return "Không đồng ý đơn xin nghỉ học";
+      case "ASSIGNMENT_GRADE":
+        return "Bài tập đã được chấm";
+      default:
+        return "Thông báo khác";
+    }
+  };
+
   const renderNotification = ({ item }: { item: Notification }) => {
     return (
       <TouchableOpacity
@@ -150,7 +166,7 @@ export default function NotificationsScreen() {
           styles.notificationItem,
           item.status === "UNREAD" && styles.unreadNotification,
         ]}
-        onPress={() => markNotificationAsRead(item.id)}
+        onPress={() => markNotificationAsRead(item)}
       >
         <View style={styles.notificationContent}>
           <View style={styles.iconContainer}>
@@ -161,7 +177,7 @@ export default function NotificationsScreen() {
               {item.title_push_notification}
             </Text>
             <Text style={styles.messageText} numberOfLines={2}>
-              {item.message}
+              {renderMessage(item.type)}
             </Text>
             <Text style={styles.timeText}>
               {carbon.formatDate(item.sent_time, "HH:mm DD/MM/YYYY")}

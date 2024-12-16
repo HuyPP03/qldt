@@ -152,9 +152,10 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
 
       formDataSendMail.append(
         "message",
-        status === AbsentStatus.ACCEPTED
-          ? "Cho phép nghỉ học"
-          : "Không đồng ý đơn xin nghỉ học"
+        JSON.stringify({
+          pathname: "class-detail",
+          params: { id: classId, tab: "Nghỉ học", isList: true, requestId },
+        })
       );
       formDataSendMail.append("token", token as string);
       formDataSendMail.append("toUser", userId);
@@ -177,10 +178,7 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
         console.log("Reviewed absent request", requestId);
         fetchAbsentRequests(); // Refetch data after review
       } else {
-        console.log(
-          "Failed to approve absent request",
-          response.meta.message
-        );
+        console.log("Failed to approve absent request", response.meta.message);
       }
     } catch (error) {
       console.log("Error approving absent request:", error);

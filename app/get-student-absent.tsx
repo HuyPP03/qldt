@@ -39,7 +39,7 @@ const GetStudentAbsentRequests = forwardRef((props: any, ref) => {
     null
   );
   const pageSize = "4";
-  const classId = props.classId;
+  const classId = props.props.classId;
 
   useEffect(() => {
     fetchAbsentRequests();
@@ -64,11 +64,15 @@ const GetStudentAbsentRequests = forwardRef((props: any, ref) => {
         }
       );
 
-      console.log(response);
-
       if (response.meta.code === "1000") {
         setAbsentRequests(response.data.page_content);
         setTotalPages(parseInt(response.data.page_info.total_page, 10));
+        if (props.props.requestId) {
+          const request = response.data.page_content.find(
+            (request) => request.id === props.props.requestId
+          );
+          setSelectedRequest(request ? request : null);
+        }
       } else {
         console.log(
           "Failed to fetch absent requests:",

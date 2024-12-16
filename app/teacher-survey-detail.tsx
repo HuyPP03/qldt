@@ -165,10 +165,7 @@ export default function TeacherSurveyDetail() {
       if (data.meta.code === "1000") {
         setSubmissions(data.data);
       } else {
-        console.log(
-          "Failed to fetch submission responses:",
-          data.meta.message
-        );
+        console.log("Failed to fetch submission responses:", data.meta.message);
         setError(data.meta.message);
       }
     } catch (error) {
@@ -215,7 +212,21 @@ export default function TeacherSurveyDetail() {
 
       const formDataSendMail = new FormData();
 
-      formDataSendMail.append("message", "Bài tập đã được chấm");
+      formDataSendMail.append(
+        "message",
+        JSON.stringify({
+          pathname: "student-survey-detail",
+          params: {
+            surveyId,
+            surveyName,
+            deadline,
+            description,
+            fileUrl,
+            grade: grade,
+            isSubmitted: "true",
+          },
+        })
+      );
       formDataSendMail.append("token", token as string);
       formDataSendMail.append("toUser", userId);
       formDataSendMail.append("type", "ASSIGNMENT_GRADE");

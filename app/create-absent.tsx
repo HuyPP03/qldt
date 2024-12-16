@@ -151,7 +151,13 @@ export default function CreateAbsent({
 
       const formDataSendMail = new FormData();
 
-      formDataSendMail.append("message", title);
+      formDataSendMail.append(
+        "message",
+        JSON.stringify({
+          pathname: "class-detail",
+          params: { id: classId, tab: "Nghỉ học" },
+        })
+      );
       formDataSendMail.append("token", token as string);
       formDataSendMail.append("toUser", classDetail?.lecturer_account_id);
       formDataSendMail.append("type", "ABSENCE");

@@ -15,12 +15,18 @@ import { useRouter } from "expo-router";
 
 interface AbsentTabProps {
   classId: string;
+  isList?: boolean;
+  requestId?: string;
 }
 
-export default function AbsentTab({ classId }: AbsentTabProps) {
+export default function AbsentTab({
+  classId,
+  isList,
+  requestId,
+}: AbsentTabProps) {
   const router = useRouter();
   const layout = useWindowDimensions();
-  const [index, setIndex] = React.useState(0);
+  const [index, setIndex] = React.useState(isList ? 1 : 0);
   const [routes] = React.useState([
     { key: "createAbsent", title: "Tạo đơn" },
     { key: "getStudentAbsentRequests", title: "Danh sách đơn" },
@@ -56,7 +62,7 @@ export default function AbsentTab({ classId }: AbsentTabProps) {
         return (
           <GetStudentAbsentRequests
             ref={getStudentAbsentRequestsRef}
-            props={{ classId }}
+            props={{ classId, requestId }}
           />
         );
       default:
@@ -77,14 +83,14 @@ export default function AbsentTab({ classId }: AbsentTabProps) {
               key={route.key}
               style={[
                 styles.tabButton,
-                index === i ? styles.activeTabButton : null, 
+                index === i ? styles.activeTabButton : null,
               ]}
               onPress={() => setIndex(i)}
             >
               <Text
                 style={[
                   styles.tabText,
-                  { color: index === i ? "#CC0000" : "#333" }, 
+                  { color: index === i ? "#CC0000" : "#333" },
                 ]}
               >
                 {route.title}
@@ -95,9 +101,6 @@ export default function AbsentTab({ classId }: AbsentTabProps) {
       )}
       style={styles.tabView}
     />
-
-
-
   );
 }
 
@@ -140,7 +143,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     marginTop: 10,
   },
-  
+
   tabButton: {
     flex: 1,
     padding: 10,
@@ -151,16 +154,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
   },
-  
+
   activeTabButton: {
-    backgroundColor: "#FFEEEE", 
-    borderColor: "#CC0000", 
+    backgroundColor: "#FFEEEE",
+    borderColor: "#CC0000",
   },
-  
+
   tabText: {
     fontSize: 12,
     fontWeight: "bold",
-    color: "#333", 
+    color: "#333",
   },
   tabView: {
     backgroundColor: "white",
