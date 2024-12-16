@@ -32,7 +32,11 @@ async function request<T>(
     }
 
     if (finalOptions.body) {
-      finalOptions.body = JSON.stringify(finalOptions.body);
+      if (finalOptions.headers["Content-Type"] !== "application/json") {
+        finalOptions.body = finalOptions.body;
+      } else {
+        finalOptions.body = JSON.stringify(finalOptions.body);
+      }
     }
 
     const response = await fetch(url, finalOptions);

@@ -12,6 +12,7 @@ import {
 import { Text } from "react-native";
 import MenuItem, { menuItems } from "../../components/MenuItem";
 import { useUser } from "../contexts/UserContext";
+import { useNotifications } from "../contexts/NotificationContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useRef, useEffect } from "react";
 import { Modal, Animated, Dimensions } from "react-native";
@@ -21,7 +22,6 @@ import "moment/locale/vi";
 import CalendarPicker from "react-native-calendar-picker";
 import { Badge } from "react-native-paper";
 import { useRouter } from "expo-router";
-import { useNotifications } from "../notifications";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -51,6 +51,14 @@ export default function HomeScreen() {
       weekDays.push(moment().startOf("week").add(i, "days"));
     }
     return weekDays;
+  };
+
+  const convertGoogleDriveLink = (driveLink: string) => {
+    const match = driveLink.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    return null;
   };
 
   const handleCloseDrawer = () => {
@@ -287,8 +295,11 @@ export default function HomeScreen() {
       >
         {/* User Profile Section */}
         <View style={styles.profileSection}>
-          {userInfo?.avatar ? (
-            <Image source={{ uri: userInfo?.avatar }} style={styles.avatar} />
+          {userInfo?.avatar && convertGoogleDriveLink(userInfo?.avatar) ? (
+            <Image
+              source={{ uri: convertGoogleDriveLink(userInfo?.avatar) || "" }}
+              style={styles.avatar}
+            />
           ) : (
             <View style={styles.avatarContainer}>
               <Text style={styles.avatarText}>{userInfo?.ten?.[0] || "U"}</Text>
@@ -312,7 +323,7 @@ export default function HomeScreen() {
               <Ionicons name="notifications-outline" size={24} color="#555" />
               {unreadCount > 0 && (
                 <Badge style={styles.badge} size={22}>
-                  {unreadCount}
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </Badge>
               )}
             </View>

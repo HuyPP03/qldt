@@ -116,7 +116,7 @@ export default function ProfileScreen() {
         }
       );
 
-      if (response.code !== 1000) {
+      if (response.code !== "1000") {
         setToast({ message: response.message, type: "error" });
       } else {
         setModalVisible(false);
@@ -136,17 +136,13 @@ export default function ProfileScreen() {
   }, [passwordForm, token]);
 
   const handleUpdateInfo = useCallback(async () => {
+    console.log(avatarFile);
     try {
       const formData = new FormData();
-      formData.append("token", token as string);
-      formData.append("name", infoForm.name);
+      formData.append("token", token!);
 
       if (avatarFile) {
-        formData.append("file", {
-          uri: avatarFile.uri,
-          type: avatarFile.type,
-          name: avatarFile.name,
-        } as any);
+        formData.append("file", avatarFile as any);
       }
 
       const response: any = await request(
@@ -160,7 +156,7 @@ export default function ProfileScreen() {
         }
       );
 
-      if (response.code !== 1000) {
+      if (response.code !== "1000") {
         setIsEditing(false);
         setToast({ message: response.message, type: "error" });
       } else {
@@ -179,7 +175,7 @@ export default function ProfileScreen() {
     } finally {
       setTimeout(() => setToast(null), 3000);
     }
-  }, [infoForm, avatarFile, token]);
+  }, [avatarFile, token]);
 
   const pickImage = async () => {
     try {
@@ -189,12 +185,11 @@ export default function ProfileScreen() {
         aspect: [1, 1],
         quality: 0.8,
       });
-
       if (!result.canceled && result.assets[0]) {
         const file: ImageFile = {
           uri: result.assets[0].uri,
-          type: "image/jpeg",
-          name: "avatar.jpg",
+          type: result.assets[0].mimeType!,
+          name: result.assets[0].fileName!,
         };
         setAvatarFile(file);
         setPreviewUri(file.uri);
@@ -207,7 +202,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // Thêm hàm xử lý hủy bỏ
   const handleCancelEdit = () => {
     setIsEditing(false);
     setInfoForm({ name: userInfo?.name || "" });
