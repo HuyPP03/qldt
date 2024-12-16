@@ -85,6 +85,14 @@ export default function ProfileScreen() {
   const [avatarFile, setAvatarFile] = useState<ImageFile | null>(null);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
 
+  const convertGoogleDriveLink = (driveLink: string) => {
+    const match = driveLink.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    return null;
+  };
+
   useEffect(() => {
     if (modalVisible) {
       Animated.spring(scaleAnim, {
@@ -248,9 +256,12 @@ export default function ProfileScreen() {
                 <>
                   {previewUri ? (
                     <Image source={{ uri: previewUri }} style={styles.avatar} />
-                  ) : userInfo?.avatar ? (
+                  ) : userInfo?.avatar &&
+                    convertGoogleDriveLink(userInfo?.avatar) ? (
                     <Image
-                      source={{ uri: userInfo.avatar }}
+                      source={{
+                        uri: convertGoogleDriveLink(userInfo?.avatar) || "",
+                      }}
                       style={styles.avatar}
                     />
                   ) : (
