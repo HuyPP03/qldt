@@ -104,8 +104,6 @@ export default function CreateAbsent({
     fetchClassDetail();
   }, []);
 
-  console.log(classDetail);
-
   const handleCreateAbsent = async () => {
     const existedDate = onCreateRequest(startDate.toISOString().split("T")[0]);
     if (existedDate) {

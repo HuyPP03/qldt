@@ -16,8 +16,8 @@ import { formatDate } from "@/utility/format-date";
 import { Toast } from "./Toast";
 
 interface SubmissionItemProps {
-    submission: SubmissionData;
-    onGrade: (submissionId: number, grade: string | null) => void;
+  submission: SubmissionData;
+  onGrade: (submissionId: number, grade: string | null, userId: string) => void;
 }
 
 interface SubmissionData {
@@ -38,11 +38,14 @@ interface StudentAccount {
   student_id: string;
 }
 
-export const SubmissionItem = ({submission, onGrade}: SubmissionItemProps) => {
+export const SubmissionItem = ({
+  submission,
+  onGrade,
+}: SubmissionItemProps) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [viewModalVisible, setViewModalVisible] = useState(false); 
+  const [viewModalVisible, setViewModalVisible] = useState(false);
   const [gradeModalVisible, setGradeModalVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(300)).current; 
+  const slideAnim = useRef(new Animated.Value(300)).current;
   const [grade, setGrade] = useState<string | null>(submission.grade || "");
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +68,7 @@ export const SubmissionItem = ({submission, onGrade}: SubmissionItemProps) => {
 
   const openViewModal = () => {
     setViewModalVisible(true);
-    setModalVisible(false)
+    setModalVisible(false);
   };
 
   const closeViewModal = () => {
@@ -74,24 +77,24 @@ export const SubmissionItem = ({submission, onGrade}: SubmissionItemProps) => {
   };
 
   const closeViewModalWhenTouchOutside = () => {
-    setModalVisible(false)
+    setModalVisible(false);
     setViewModalVisible(false);
-  }
+  };
 
   const openGradeModal = () => {
     setGradeModalVisible(true);
-    setModalVisible(false); 
+    setModalVisible(false);
   };
 
   const closeGradeModal = () => {
     setGradeModalVisible(false);
-    setModalVisible(true); 
+    setModalVisible(true);
   };
 
   const closeGradeModalWhenTouchOutside = () => {
-    setModalVisible(false)
+    setModalVisible(false);
     setGradeModalVisible(false);
-  }
+  };
 
   const handleGradeChange = (text: string) => {
     setGrade(text);
@@ -102,7 +105,8 @@ export const SubmissionItem = ({submission, onGrade}: SubmissionItemProps) => {
       setError("Điểm phải nằm trong khoảng từ 0 đến 10.");
     } else {
       setError(null);
-      onGrade(submission.id, grade);
+      console.log(submission);
+      onGrade(submission.id, grade, submission.student_account.account_id);
       closeGradeModal();
       closeModal();
     }
@@ -117,7 +121,9 @@ export const SubmissionItem = ({submission, onGrade}: SubmissionItemProps) => {
       <Text style={styles.submissionText}>
         Mã sinh viên: {submission.student_account.student_id}
       </Text>
-      <Text style={styles.submissionText}>Ngày nộp: {formatDate(submission.submission_time)}</Text>
+      <Text style={styles.submissionText}>
+        Ngày nộp: {formatDate(submission.submission_time)}
+      </Text>
       <Text style={styles.submissionText}>
         Điểm: {submission.grade || "Chưa chấm"}
       </Text>
@@ -136,17 +142,28 @@ export const SubmissionItem = ({submission, onGrade}: SubmissionItemProps) => {
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <Animated.View
-                style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}
+                style={[
+                  styles.modalContent,
+                  { transform: [{ translateY: slideAnim }] },
+                ]}
               >
                 <Text style={styles.modalText}>
                   {submission.student_account.first_name}{" "}
                   {submission.student_account.last_name}
                 </Text>
-                <TouchableOpacity style={styles.optionButton} onPress={openViewModal}>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={openViewModal}
+                >
                   <Ionicons name="eye-outline" size={24} color="black" />
-                  <Text style={styles.optionText}>Xem bài nộp của sinh viên</Text>
+                  <Text style={styles.optionText}>
+                    Xem bài nộp của sinh viên
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton} onPress={openGradeModal}>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={openGradeModal}
+                >
                   <Ionicons name="star-outline" size={24} color="black" />
                   <Text style={styles.optionText}>Chấm điểm cho sinh viên</Text>
                 </TouchableOpacity>
@@ -164,73 +181,83 @@ export const SubmissionItem = ({submission, onGrade}: SubmissionItemProps) => {
         visible={viewModalVisible}
         animationType="slide"
         onRequestClose={closeViewModal}
-        >
+      >
         <TouchableWithoutFeedback onPress={closeViewModalWhenTouchOutside}>
-            <View style={styles.modalOverlay}>
+          <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
-                <View style={styles.viewModalContent}>
+              <View style={styles.viewModalContent}>
                 <Text style={styles.modalText}>
-                    Bài nộp của {submission.student_account.first_name} {submission.student_account.last_name}
+                  Bài nộp của {submission.student_account.first_name}{" "}
+                  {submission.student_account.last_name}
                 </Text>
 
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionHeaderText}>Nội dung phản hồi:</Text>
+                  <Text style={styles.sectionHeaderText}>
+                    Nội dung phản hồi:
+                  </Text>
                 </View>
                 <ScrollView style={styles.textResponseContainer}>
-                  <Text style={styles.responseText}>{submission.text_response}</Text>
+                  <Text style={styles.responseText}>
+                    {submission.text_response}
+                  </Text>
                 </ScrollView>
 
                 {submission.file_url && (
-                    <TouchableOpacity
+                  <TouchableOpacity
                     style={styles.fileLinkButton}
                     onPress={() => Linking.openURL(submission.file_url)}
-                    >
-                    <Text style={styles.fileLinkText}>Tải về bài nộp của sinh viên</Text>
-                    </TouchableOpacity>
+                  >
+                    <Text style={styles.fileLinkText}>
+                      Tải về bài nộp của sinh viên
+                    </Text>
+                  </TouchableOpacity>
                 )}
 
                 <TouchableOpacity onPress={closeViewModal}>
-                    <Text style={styles.closeButton}>Đóng</Text>
+                  <Text style={styles.closeButton}>Đóng</Text>
                 </TouchableOpacity>
-                </View>
+              </View>
             </TouchableWithoutFeedback>
-            </View>
+          </View>
         </TouchableWithoutFeedback>
-        </Modal>
-        
-        <Modal
-            transparent={true}
-            visible={gradeModalVisible}
-            animationType="slide"
-            onRequestClose={closeGradeModal}
-        >
-            {error ? <Toast message={error} onDismiss={() => setError(null)} /> : null}
-            <TouchableWithoutFeedback onPress={closeGradeModal}>
-            <View style={styles.modalOverlay}>
-                <TouchableWithoutFeedback>
-                <View style={styles.viewModalContent}>
-                    <Text style={styles.modalText}>Chấm điểm cho sinh viên</Text>
-                    <Text style={styles.submissionTitle}>Nhập điểm: </Text>
-                    <TextInput
-                    style={styles.gradeInput}
-                    value={grade || ""}
-                    onChangeText={handleGradeChange}
-                    placeholder="Nhập điểm"
-                    keyboardType="numeric"
-                    />
-                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmitGrade}>
-                    <Text style={styles.submitButtonText}>Chấm điểm</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={closeGradeModalWhenTouchOutside}>
-                    <Text style={styles.closeButton}>Đóng</Text>
-                    </TouchableOpacity>
-                </View>
-                </TouchableWithoutFeedback>
-            </View>
+      </Modal>
+
+      <Modal
+        transparent={true}
+        visible={gradeModalVisible}
+        animationType="slide"
+        onRequestClose={closeGradeModal}
+      >
+        {error ? (
+          <Toast message={error} onDismiss={() => setError(null)} />
+        ) : null}
+        <TouchableWithoutFeedback onPress={closeGradeModal}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.viewModalContent}>
+                <Text style={styles.modalText}>Chấm điểm cho sinh viên</Text>
+                <Text style={styles.submissionTitle}>Nhập điểm: </Text>
+                <TextInput
+                  style={styles.gradeInput}
+                  value={grade || ""}
+                  onChangeText={handleGradeChange}
+                  placeholder="Nhập điểm"
+                  keyboardType="numeric"
+                />
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={handleSubmitGrade}
+                >
+                  <Text style={styles.submitButtonText}>Chấm điểm</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={closeGradeModalWhenTouchOutside}>
+                  <Text style={styles.closeButton}>Đóng</Text>
+                </TouchableOpacity>
+              </View>
             </TouchableWithoutFeedback>
-            
-        </Modal>
-        
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -307,7 +334,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   fileLinkButton: {
-    backgroundColor: "#CC0000", 
+    backgroundColor: "#CC0000",
     borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -337,12 +364,12 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   textResponseContainer: {
-    backgroundColor: "#f0f0f0", 
+    backgroundColor: "#f0f0f0",
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
     maxHeight: 400,
-    height:200,
+    height: 200,
   },
   gradeInput: {
     borderWidth: 1,
@@ -351,7 +378,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     fontSize: 16,
-    marginTop:10, 
+    marginTop: 10,
   },
   submitButton: {
     backgroundColor: "#CC0000",

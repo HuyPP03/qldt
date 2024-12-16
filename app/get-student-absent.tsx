@@ -25,10 +25,11 @@ import {
   GetStudentAbsentResponse,
   TranslatedAbsentStatus,
 } from "./interfaces/absent/absent.interface";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WebView } from "react-native-webview";
+import { useUser } from "./contexts/UserContext";
 
 const GetStudentAbsentRequests = forwardRef((props: any, ref) => {
+  const { token } = useUser();
   const [absentRequests, setAbsentRequests] = useState<AbsentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -45,9 +46,8 @@ const GetStudentAbsentRequests = forwardRef((props: any, ref) => {
   }, [page]);
 
   const fetchAbsentRequests = async () => {
-    const token = await AsyncStorage.getItem("userToken");
-
     try {
+      if (!token) return;
       const req: GetStudentAbsentRequest = {
         token: token as string,
         class_id: classId,
@@ -63,6 +63,8 @@ const GetStudentAbsentRequests = forwardRef((props: any, ref) => {
           body: req,
         }
       );
+
+      console.log(response);
 
       if (response.meta.code === "1000") {
         setAbsentRequests(response.data.page_content);

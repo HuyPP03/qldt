@@ -89,12 +89,14 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
 
   const fetchAbsentRequests = useCallback(async () => {
     try {
+      if (!token) {
+        return;
+      }
       const req: GetAbsentRequest = {
         token: token as string,
         class_id: classId,
         date: filterDate?.toISOString().split("T")[0],
       };
-      console.log(req);
       const response: GetAbsentResponse = await request(
         `${SERVER_URL}/it5023e/get_absence_requests`,
         {
@@ -128,7 +130,11 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
     fetchClassInfo();
   }, []);
 
-  const handleReview = async (requestId: string, status: AbsentStatus) => {
+  const handleReview = async (
+    requestId: string,
+    status: AbsentStatus,
+    userId: string
+  ) => {
     try {
       const req: ReviewAbsentRequest = {
         token: token as string,
@@ -141,6 +147,31 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
           body: req,
         }
       );
+
+      const formDataSendMail = new FormData();
+
+      formDataSendMail.append(
+        "message",
+        status === AbsentStatus.ACCEPTED
+          ? "Cho phép nghỉ học"
+          : "Không đồng ý đơn xin nghỉ học"
+      );
+      formDataSendMail.append("token", token as string);
+      formDataSendMail.append("toUser", userId);
+      formDataSendMail.append(
+        "type",
+        status === AbsentStatus.ACCEPTED
+          ? "ACCEPT_ABSENCE_REQUEST"
+          : "REJECT_ABSENCE_REQUEST"
+      );
+
+      await request(`${SERVER_URL}/it5023e/send_notification`, {
+        method: "POST",
+        body: formDataSendMail,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (response.meta.code === "1000") {
         console.log("Reviewed absent request", requestId);
@@ -210,13 +241,26 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={styles.iconButton}
-                onPress={() => handleReview(item.id, AbsentStatus.ACCEPTED)}
+                onPress={() => {
+                  // console.log(item);
+                  handleReview(
+                    item.id,
+                    AbsentStatus.ACCEPTED,
+                    item?.student_account?.account_id
+                  );
+                }}
               >
                 <Ionicons name="checkmark" size={24} color="#4CAF50" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconButton}
-                onPress={() => handleReview(item.id, AbsentStatus.REJECTED)}
+                onPress={() =>
+                  handleReview(
+                    item.id,
+                    AbsentStatus.REJECTED,
+                    item?.student_account?.account_id
+                  )
+                }
               >
                 <Ionicons name="close" size={24} color="#F44336" />
               </TouchableOpacity>

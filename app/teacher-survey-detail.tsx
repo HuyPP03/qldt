@@ -16,61 +16,54 @@ import { useUser } from "./contexts/UserContext";
 import { Toast } from "@/components/Toast";
 import request from "@/utility/request";
 import { SERVER_URL } from "@/utility/env";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SubmissionItem } from "@/components/SubmissionItem";
 import LoadingIndicator from "@/components/LoadingIndicator";
 
+interface StudentAccount {
+  account_id: string;
+  last_name: string;
+  first_name: string;
+  email: string;
+  student_id: string;
+}
+
+interface SubmissionData {
+  id: number;
+  assignment_id: number;
+  submission_time: string;
+  grade: string | null;
+  file_url: string;
+  text_response: string;
+  student_account: StudentAccount;
+}
+
+interface SubmissionResponse {
+  data: SubmissionData[];
+  meta: {
+    code: string;
+    message: string;
+  };
+}
+
 export default function TeacherSurveyDetail() {
-  const { userInfo } = useUser();
+  const { token } = useUser();
   const [activeTab, setActiveTab] = useState("Mô tả");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [submissions, setSubmissions] = useState<SubmissionData[]>([])
-  const [refreshing, setRefreshing] = useState<boolean>(false); 
+  const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [success, setSuccess] = useState<string | null>(null);
 
   const route = useRoute();
-  const {
-    id,
-    surveyId,
-    surveyName,
-    deadline,
-    description,
-    fileUrl,
-  } = route.params as {
-    id: string;
-    surveyId: string;
-    surveyName: string;
-    deadline: string;
-    description: string;
-    fileUrl: string;
-  };
-
-  interface StudentAccount {
-    account_id: string;
-    last_name: string;
-    first_name: string;
-    email: string;
-    student_id: string;
-  }
-  
-  interface SubmissionData {
-    id: number;
-    assignment_id: number;
-    submission_time: string;
-    grade: string | null;
-    file_url: string;
-    text_response: string;
-    student_account: StudentAccount;
-  }
-  
-  interface SubmissionResponse {
-    data: SubmissionData[];
-    meta: {
-      code: string;
-      message: string;
+  const { id, surveyId, surveyName, deadline, description, fileUrl } =
+    route.params as {
+      id: string;
+      surveyId: string;
+      surveyName: string;
+      deadline: string;
+      description: string;
+      fileUrl: string;
     };
-  }
 
   const formatDeadline = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -83,52 +76,66 @@ export default function TeacherSurveyDetail() {
     return new Date(dateString).toLocaleDateString("vi-VN", options);
   };
 
-  const formattedDeadline = formatDeadline(deadline)
+  const formattedDeadline = formatDeadline(deadline);
+
+  console.log(submissions);
 
   const renderContent = () => {
     switch (activeTab) {
       case "Mô tả":
         return (
-        <View style={styles.container}>
-          <ScrollView style={styles.content}>
-            <View style={styles.nameDeadlineContainer}>
-              <Text style={styles.title}>{surveyName}</Text>
-              <Text style={styles.deadline}>Hạn nộp: {formattedDeadline}</Text>
-            </View>
-    
-            <Text style={styles.sectionHeading}>Hướng dẫn</Text>
-            <ScrollView style={styles.descriptionContainer}>
-                  <Text style={styles.descriptionText}>{description}</Text>
+          <View style={styles.container}>
+            <ScrollView style={styles.content}>
+              <View style={styles.nameDeadlineContainer}>
+                <Text style={styles.title}>{surveyName}</Text>
+                <Text style={styles.deadline}>
+                  Hạn nộp: {formattedDeadline}
+                </Text>
+              </View>
+
+              <Text style={styles.sectionHeading}>Hướng dẫn</Text>
+              <ScrollView style={styles.descriptionContainer}>
+                <Text style={styles.descriptionText}>{description}</Text>
+              </ScrollView>
+
+              <Text style={styles.sectionHeading}>Bài tập của tôi</Text>
+              {fileUrl && (
+                <TouchableOpacity
+                  style={styles.fileBox}
+                  onPress={() => Linking.openURL(fileUrl)}
+                >
+                  <View style={styles.fileContainer}>
+                    <Text style={styles.fileText}>Tải tài liệu đính kèm</Text>
+                    <Ionicons
+                      name="document-text-outline"
+                      size={20}
+                      color="#0066CC"
+                      style={styles.fileIcon}
+                    />
+                  </View>
+                </TouchableOpacity>
+              )}
             </ScrollView>
-    
-             <Text style={styles.sectionHeading}>Bài tập của tôi</Text>
-            {fileUrl && (
-              <TouchableOpacity
-                style={styles.fileBox}
-                onPress={() => Linking.openURL(fileUrl)}
-              >
-                <View style={styles.fileContainer}>
-                  <Text style={styles.fileText}>Tải tài liệu đính kèm</Text>
-                  <Ionicons
-                    name="document-text-outline"
-                    size={20}
-                    color="#0066CC"
-                    style={styles.fileIcon}
-                  />
-                </View>
-              </TouchableOpacity>
-            )}
-          </ScrollView>
-        </View>
-      );
+          </View>
+        );
       case "Bài nộp và chấm điểm":
         return (
-          <ScrollView contentContainerStyle={styles.content} refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh}/>}
+          <ScrollView
+            contentContainerStyle={styles.content}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
+            }
           >
             <Text style={styles.title}>Lớp {id}</Text>
             {submissions.map((submission) => (
-              <SubmissionItem key={submission.id} submission={submission} onGrade={handleGrade}/>
+              <SubmissionItem
+                key={submission.id}
+                submission={submission}
+                onGrade={handleGrade}
+              />
             ))}
           </ScrollView>
         );
@@ -138,40 +145,46 @@ export default function TeacherSurveyDetail() {
   };
 
   const fetchSubmissionResponse = async () => {
-    const token = await AsyncStorage.getItem("userToken");
-  
     if (!token) {
       setError("Token is missing");
       return;
     }
-  
+
     try {
-      const data = await request<SubmissionResponse>(`${SERVER_URL}/it5023e/get_survey_response`, {
-        method: "POST",
-        body: {
-          token: token,
-          survey_id: surveyId,
-        },
-      });
-  
+      const data = await request<SubmissionResponse>(
+        `${SERVER_URL}/it5023e/get_survey_response`,
+        {
+          method: "POST",
+          body: {
+            token: token,
+            survey_id: surveyId,
+          },
+        }
+      );
+
       if (data.meta.code === "1000") {
-        setSubmissions(data.data); 
+        setSubmissions(data.data);
       } else {
-        console.error("Failed to fetch submission responses:", data.meta.message);
+        console.error(
+          "Failed to fetch submission responses:",
+          data.meta.message
+        );
         setError(data.meta.message);
       }
     } catch (error) {
       console.error("Error fetching submission responses:", error);
       setError("Unable to fetch submission responses");
     } finally {
-      setLoading(false); 
+      setLoading(false);
       setRefreshing(false);
     }
   };
 
-  const handleGrade = async (submissionId: number, grade: string | null) => {
-    const token = await AsyncStorage.getItem("userToken");
-
+  const handleGrade = async (
+    submissionId: number,
+    grade: string | null,
+    userId: string
+  ) => {
     if (!token) {
       setError("Token is missing");
       return;
@@ -192,14 +205,32 @@ export default function TeacherSurveyDetail() {
     };
 
     try {
-      const data = await request<SubmissionResponse>(`${SERVER_URL}/it5023e/get_survey_response`, {
+      const data = await request<SubmissionResponse>(
+        `${SERVER_URL}/it5023e/get_survey_response`,
+        {
+          method: "POST",
+          body: payload,
+        }
+      );
+
+      const formDataSendMail = new FormData();
+
+      formDataSendMail.append("message", "Bài tập đã được chấm");
+      formDataSendMail.append("token", token as string);
+      formDataSendMail.append("toUser", userId);
+      formDataSendMail.append("type", "ASSIGNMENT_GRADE");
+
+      await request(`${SERVER_URL}/it5023e/send_notification`, {
         method: "POST",
-        body: payload,
+        body: formDataSendMail,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       if (data.meta.code === "1000") {
         console.log("Grade submitted successfully");
-        fetchSubmissionResponse(); 
+        fetchSubmissionResponse();
       } else {
         console.error("Failed to submit grade:", data.meta.message);
         setError(data.meta.message);
@@ -208,23 +239,23 @@ export default function TeacherSurveyDetail() {
       console.error("Error submitting grade:", error);
       setError("Chấm điểm thất bại");
     } finally {
-      setSuccess("Chấm điểm thành công")
+      setSuccess("Chấm điểm thành công");
     }
   };
-  
+
   useEffect(() => {
     fetchSubmissionResponse();
   }, [surveyId]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchSubmissionResponse(); 
+    fetchSubmissionResponse();
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Nội dung bài kiểm tra</Text>
@@ -244,11 +275,18 @@ export default function TeacherSurveyDetail() {
         ))}
       </View>
 
-      {loading ? <LoadingIndicator/> : renderContent()}
+      {loading ? <LoadingIndicator /> : renderContent()}
 
-      {error ? <Toast message={error} onDismiss={() => setError(null)} /> : null}
-      {success ? <Toast type="success" message={success} onDismiss={() => setSuccess(null)} /> : null}
-        
+      {error ? (
+        <Toast message={error} onDismiss={() => setError(null)} />
+      ) : null}
+      {success ? (
+        <Toast
+          type="success"
+          message={success}
+          onDismiss={() => setSuccess(null)}
+        />
+      ) : null}
     </View>
   );
 }
@@ -348,15 +386,15 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   descriptionContainer: {
-    backgroundColor: "#f0f0f0", 
+    backgroundColor: "#f0f0f0",
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
     maxHeight: 500,
-    height:300,
+    height: 300,
   },
   descriptionText: {
     color: "#333",
     marginBottom: 10,
-  }
+  },
 });
