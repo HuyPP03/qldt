@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Modal from "react-native-modal";
+import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import React, { useRef, useState, useEffect } from "react";
 import {
   Message,
@@ -60,10 +61,15 @@ export default function Chat() {
   const [page, setPage] = useState<number>(0);
   const [isFetchingMore, setIsFetchingMore] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [cameraVisible, setCameraVisible] = useState<boolean>(false);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [facing, setFacing] = useState<CameraType>("back");
+  const [permission, requestPermission] = useCameraPermissions();
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null
   );
   const isFocused = useIsFocused();
+  const camera = useRef<CameraView>(null);
   const { userInfo } = useUser();
   const {
     socket: { sendMessage, addMessageListener, removeMessageListener },
@@ -90,6 +96,7 @@ export default function Chat() {
             index: page,
             count: numberPerPage,
             conversation_id: conversationId,
+            partner_id: partnerId,
             mark_as_read: true,
           },
         }
@@ -247,14 +254,6 @@ export default function Chat() {
       });
       if (res.meta.code === "1000") {
         console.log("Message deleted successfully");
-        // setMessages((prevMessages) =>
-        //   prevMessages.map((message: Message) => {
-        //     if (message.message_id === messageId) {
-        //       return { ...message, content: null };
-        //     }
-        //     return message;
-        //   })
-        // );
         setPage(0);
         fetchMessages(0);
       } else {
@@ -278,6 +277,33 @@ export default function Chat() {
     if (content == null) return;
     setSelectedMessageId(messageId);
     setIsModalVisible(true);
+  };
+
+  const toggleCameraFacing = () => {
+    setFacing((current) => (current === "back" ? "front" : "back"));
+  };
+
+  const handleCameraButtonPress = async () => {
+    if (!permission) {
+      // Camera permissions are still loading.
+      return;
+    }
+
+    if (!permission.granted) {
+      // Camera permissions are not granted yet.
+      requestPermission();
+    } else {
+      setCameraVisible(true);
+    }
+  };
+
+  const handleTakePicture = async () => {
+    if (camera.current) {
+      camera.current._onCameraReady();
+      const photo = await camera.current.takePictureAsync();
+      setPhotoUri(photo?.uri || null);
+      setCameraVisible(false);
+    }
   };
 
   const renderMessage: ListRenderItem<Message> = ({ item }) => {
@@ -400,6 +426,13 @@ export default function Chat() {
             />
 
             <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={handleCameraButtonPress}
+            >
+              <Ionicons name="camera" size={24} color="#666" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.sendButton}
               onPress={handleSendMessage}
             >
@@ -430,6 +463,54 @@ export default function Chat() {
         </View>
       </Modal>
       {error ? <Toast message={error} /> : null}
+      {cameraVisible && (
+        <Modal
+          isVisible={cameraVisible}
+          onBackdropPress={() => setCameraVisible(false)}
+          style={styles.cameraModal}
+        >
+          <CameraView style={styles.camera} facing={facing} ref={camera}>
+            <View style={styles.cameraButtonContainer}>
+              <TouchableOpacity
+                style={styles.closeCameraButton}
+                onPress={() => setCameraVisible(false)}
+              >
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.facingButton}
+                onPress={toggleCameraFacing}
+              >
+                <Ionicons name="camera-reverse" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.takePictureButton}
+                onPress={handleTakePicture}
+              >
+                <Ionicons name="camera" size={48} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </CameraView>
+        </Modal>
+      )}
+
+      {photoUri && (
+        <Modal
+          isVisible={true}
+          onBackdropPress={() => setPhotoUri(null)}
+          style={styles.previewModal}
+        >
+          <View style={styles.previewContainer}>
+            <Image source={{ uri: photoUri }} style={styles.previewImage} />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setPhotoUri(null)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -594,6 +675,9 @@ const styles = StyleSheet.create({
   attachButton: {
     padding: 5,
   },
+  cameraButton: {
+    padding: 5,
+  },
   sendButton: {
     padding: 5,
   },
@@ -648,5 +732,73 @@ const styles = StyleSheet.create({
     color: "#999",
     fontStyle: "italic",
     lineHeight: 20,
+  },
+  cameraModal: {
+    justifyContent: "center",
+    alignItems: "center",
+    margin: 0,
+  },
+  camera: {
+    flex: 1,
+    width: "100%",
+  },
+  cameraButtonContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  facingButton: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    padding: 10,
+    //backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 50,
+  },
+  takePictureButton: {
+    padding: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 50,
+    alignSelf: "center",
+    position: "absolute",
+    bottom: 20,
+  },
+  previewModal: {
+    justifyContent: "center",
+    alignItems: "center",
+    margin: 0,
+  },
+  previewContainer: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "black",
+  },
+  previewImage: {
+    width: "100%",
+    height: "80%",
+    resizeMode: "contain",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    padding: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 50,
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 18,
+  },
+  closeCameraButton: {
+    position: "absolute",
+    top: 30,
+    left: 20,
+    padding: 10,
+    //backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 50,
   },
 });
