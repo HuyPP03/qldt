@@ -96,6 +96,7 @@ export default function Chat() {
             index: page,
             count: numberPerPage,
             conversation_id: conversationId,
+            partner_id: partnerId,
             mark_as_read: true,
           },
         }
