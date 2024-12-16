@@ -1,6 +1,6 @@
 import FileItem from "@/components/FileItem";
 import { Ionicons } from "@expo/vector-icons";
-import { ScrollView, TouchableOpacity, View, StyleSheet } from "react-native";
+import { ScrollView, TouchableOpacity, View, StyleSheet, RefreshControl } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { useRoute } from "@react-navigation/native";
@@ -24,6 +24,12 @@ export default function Files() {
   const { token } = useUser();
   const { id, name } = route.params as { id: string; name: string };
   const [materials, setMaterials] = useState<MaterialType[]>([]);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    getListMaterial(); 
+  };
 
   const getListMaterial = async () => {
     try {
@@ -40,6 +46,8 @@ export default function Files() {
       setMaterials(response.data);
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu:", error);
+    } finally {
+      setRefreshing(false)
     }
   };
 
@@ -60,12 +68,14 @@ export default function Files() {
 
   useEffect(() => {
     getListMaterial();
-  }, []);
+  }, [id]);
 
   return (
-    <View style={{ flex: 1 }}>
-      <View>
-        <ScrollView>
+    <View style={{ flex: 1 }}     
+    >
+      <ScrollView refreshControl={
+      <RefreshControl refreshing={refreshing} onRefresh={handleRefresh}/>}>
+        <View>
           {materials &&
             materials.length > 0 &&
             materials.map((file, index) => (
@@ -80,8 +90,8 @@ export default function Files() {
                 deleteFile={deleteFile}
               />
             ))}
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
       <FloatingActionButton
         onPress={() =>
           router.push({

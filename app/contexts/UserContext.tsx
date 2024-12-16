@@ -39,6 +39,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserInfo = async () => {
     try {
+      
+      //await AsyncStorage.removeItem("userToken");
+      //return true;
+  
+
       setLoading(true);
       const token = await AsyncStorage.getItem("userToken");
       setToken(token);
