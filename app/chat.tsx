@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   FlatList,
   ListRenderItem,
+  ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRoute, RouteProp, useIsFocused } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,6 +31,8 @@ import { SERVER_URL } from "@/utility/env";
 import { useUser } from "./contexts/UserContext";
 import { carbon } from "@/utility/carbon";
 import { useMessageContext } from "./contexts/MessageContext";
+import { getGoogleDriveDirectLink } from "@/utility/helper";
+import { defaultAvatar } from "@/constants/Image";
 
 interface chatParams {
   id?: string;
@@ -224,7 +228,14 @@ export default function Chat() {
 
         <View style={styles.userInfo}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={24} color="white" />
+            <Image
+              source={
+                avatar
+                  ? { uri: getGoogleDriveDirectLink(avatar) }
+                  : defaultAvatar
+              }
+              style={styles.avatar}
+            />
           </View>
           <View style={styles.userTextInfo}>
             <Text style={styles.userName}>{name}</Text>
@@ -236,7 +247,13 @@ export default function Chat() {
         </View>
       </View>
       <View style={styles.chatContainer}>
-        {loading && <Text>Loading...</Text>}
+        {loading && (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <ActivityIndicator size="large" color="#ff0000" />
+          </View>
+        )}
         {!loading ? (
           <FlatList
             ref={flatListRef}
