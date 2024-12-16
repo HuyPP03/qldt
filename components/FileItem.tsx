@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   Linking,
   Alert,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -32,9 +33,13 @@ const FileItem: React.FC<FileItemProps> = ({
   description,
   deleteFile,
 }) => {
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const slideAnim = useRef(new Animated.Value(300)).current;
+  const [confirmationModalVisible, setConfirmationModalVisible] = 
+  useState<boolean>(false);
   const router = useRouter();
+
+  console.log(id)
 
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -94,22 +99,32 @@ const FileItem: React.FC<FileItemProps> = ({
     }).start(() => setModalVisible(false));
   };
 
+  const openConfirmationModal = () => {
+    setConfirmationModalVisible(true);
+  };
+
+  const closeConfirmationModal = () => {
+    setConfirmationModalVisible(false);
+  };
+
   return (
     <View style={styles.container}>
-      <Ionicons
-        name={iconName as any}
-        size={32}
-        color={color}
-        style={styles.icon}
-      />
-      <View style={styles.textContainer}>
-        <Text style={styles.fileName}>{fileName}</Text>
-        {description && <Text style={styles.description}>{description}</Text>}
-      </View>
-      <TouchableOpacity style={styles.moreButton} onPress={openModal}>
-        <Ionicons name="ellipsis-horizontal" size={24} color="black" />
+      <TouchableOpacity style={styles.fileItemContainer} onPress={openFileLink}>
+        <Ionicons
+          name={iconName as any}
+          size={32}
+          color={color}
+          style={styles.icon}
+        />
+        <View style={styles.textContainer}>
+          <Text style={styles.fileName}>{fileName}</Text>
+          {description && <Text style={styles.description}>{description}</Text>}
+          {fileType && <Text style={styles.description}>{fileType}</Text>}
+        </View>
+        <TouchableOpacity style={styles.moreButton} onPress={openModal}>
+          <Ionicons name="ellipsis-horizontal" size={24} color="black" />
+        </TouchableOpacity>
       </TouchableOpacity>
-
       <Modal
         transparent={true}
         visible={modalVisible}
@@ -147,29 +162,17 @@ const FileItem: React.FC<FileItemProps> = ({
                   }}
                 >
                   <Ionicons name="create-outline" size={24} color="black" />
-                  <Text style={styles.optionText}>Đổi tên</Text>
+                  <Text style={styles.optionText}>Chỉnh sửa tệp tin</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.optionButton}
                   onPress={() => {
-                    deleteFile(id);
+                    openConfirmationModal();
                     setModalVisible(false);
                   }}
                 >
                   <Ionicons name="trash-outline" size={24} color="black" />
                   <Text style={styles.optionText}>Xóa</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton}>
-                  <Ionicons name="share-outline" size={24} color="black" />
-                  <Text style={styles.optionText}>Chia sẻ</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton}>
-                  <Ionicons name="link-outline" size={24} color="black" />
-                  <Text style={styles.optionText}>Sao chép liên kết</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton}>
-                  <Ionicons name="open-outline" size={24} color="black" />
-                  <Text style={styles.optionText}>Mở trong ứng dụng</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={closeModal}>
                   <Text style={styles.closeButton}>Đóng</Text>
@@ -179,6 +182,28 @@ const FileItem: React.FC<FileItemProps> = ({
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+      <Modal
+              visible={confirmationModalVisible}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={closeConfirmationModal}
+            >
+              <TouchableWithoutFeedback onPress={closeConfirmationModal}>
+                <View style={styles.modalOverlay}>
+                  <View style={[styles.modalContainer, { zIndex: 9999 }]}>
+                    <Text style={styles.modalTitle}>Xác nhận xóa tệp tin</Text>
+                    <View style={styles.modalButtonsContainer}>
+                      <Pressable onPress={() => {deleteFile(id); closeConfirmationModal();}}style={styles.modalConfirmButton}>
+                        <Text style={styles.modalConfirmButtonText}>Xác nhận</Text>
+                      </Pressable>
+                      <Pressable onPress={closeConfirmationModal} style={styles.modalCancelButton}>
+                        <Text style={styles.modalCancelButtonText}>Hủy</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
     </View>
   );
 };
@@ -187,9 +212,14 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    padding: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+  },
+  fileItemContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
   },
   icon: {
     marginRight: 20,
@@ -245,6 +275,48 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 12,
     color: "#999",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    width: "100%",
+    position: "absolute",
+    bottom: 0,
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  modalButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalConfirmButton: {
+    flex: 1,
+    backgroundColor: "#CC0000", 
+    paddingVertical: 10,
+    borderRadius: 5,
+    marginRight: 10,
+    alignItems: "center",
+  },
+  modalCancelButton: {
+    flex: 1,
+    backgroundColor: "#D3D3D3", 
+    paddingVertical: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  modalConfirmButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  modalCancelButtonText: {
+    color: "black",
   },
 });
 
