@@ -7,51 +7,69 @@ import {
   Modal,
   Animated,
   TouchableWithoutFeedback,
+  Linking,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 interface FileItemProps {
+  id: string;
+  classId: string;
+  link: string;
   fileName: string;
-  fileSize: string;
-  uploadTime: string;
   fileType: string;
+  deleteFile: (id: string) => void;
+  description?: string;
 }
 
 const FileItem: React.FC<FileItemProps> = ({
+  id,
+  classId,
+  link,
   fileName,
-  fileSize,
-  uploadTime,
   fileType,
+  description,
+  deleteFile,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(300)).current; // Sử dụng useRef để giữ giá trị
+  const slideAnim = useRef(new Animated.Value(300)).current;
+  const router = useRouter();
 
   const getFileIcon = (type: string) => {
     switch (type) {
       case "pdf":
         return { iconName: "document-text-outline", color: "red" };
-      case "image":
+      case "jpg":
+      case "jpeg":
+      case "png":
+      case "gif":
         return { iconName: "image-outline", color: "blue" };
-      case "video":
+      case "mp4":
+      case "avi":
         return { iconName: "videocam-outline", color: "purple" };
-      case "audio":
+      case "mp3":
+      case "wav":
         return { iconName: "musical-notes-outline", color: "orange" };
-      case "word":
+      case "doc":
+      case "docx":
         return { iconName: "document-outline", color: "blue" };
-      case "excel":
+      case "xls":
+      case "xlsx":
         return { iconName: "grid-outline", color: "green" };
-      case "powerpoint":
+      case "ppt":
+      case "pptx":
         return { iconName: "easel-outline", color: "orange" };
       case "zip":
         return { iconName: "archive-outline", color: "brown" };
-      case "text":
+      case "txt":
         return { iconName: "document-text-outline", color: "gray" };
       default:
         return { iconName: "document-outline", color: "black" };
     }
   };
 
-  const { iconName, color } = getFileIcon(fileType);
+  const { iconName, color } = getFileIcon(fileType.toLowerCase());
 
   const openModal = () => {
     setModalVisible(true);
@@ -60,6 +78,12 @@ const FileItem: React.FC<FileItemProps> = ({
       duration: 300,
       useNativeDriver: true,
     }).start();
+  };
+
+  const openFileLink = () => {
+    Linking.openURL(link).catch((err) =>
+      console.error("Failed to open link:", err)
+    );
   };
 
   const closeModal = () => {
@@ -80,9 +104,7 @@ const FileItem: React.FC<FileItemProps> = ({
       />
       <View style={styles.textContainer}>
         <Text style={styles.fileName}>{fileName}</Text>
-        <Text style={styles.fileDetails}>
-          {fileSize} - {uploadTime}
-        </Text>
+        {description && <Text style={styles.description}>{description}</Text>}
       </View>
       <TouchableOpacity style={styles.moreButton} onPress={openModal}>
         <Ionicons name="ellipsis-horizontal" size={24} color="black" />
@@ -104,15 +126,36 @@ const FileItem: React.FC<FileItemProps> = ({
                 ]}
               >
                 <Text style={styles.modalText}>{fileName}</Text>
-                <TouchableOpacity style={styles.optionButton}>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={openFileLink}
+                >
                   <Ionicons name="open-outline" size={24} color="black" />
                   <Text style={styles.optionText}>Mở</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton}>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={() => {
+                    setModalVisible(false);
+                    router.push({
+                      pathname: "/edit-file",
+                      params: {
+                        id,
+                        classId,
+                      },
+                    });
+                  }}
+                >
                   <Ionicons name="create-outline" size={24} color="black" />
                   <Text style={styles.optionText}>Đổi tên</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton}>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={() => {
+                    deleteFile(id);
+                    setModalVisible(false);
+                  }}
+                >
                   <Ionicons name="trash-outline" size={24} color="black" />
                   <Text style={styles.optionText}>Xóa</Text>
                 </TouchableOpacity>
@@ -198,6 +241,10 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 16,
     marginLeft: 10,
+  },
+  description: {
+    fontSize: 12,
+    color: "#999",
   },
 });
 

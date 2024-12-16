@@ -1,88 +1,98 @@
 import FileItem from "@/components/FileItem";
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView, TouchableOpacity, View, StyleSheet } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import { useRouter } from "expo-router";
+import { useRoute } from "@react-navigation/native";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { useEffect, useState } from "react";
+import request from "@/utility/request";
+import { SERVER_URL } from "@/utility/env";
+import { useUser } from "./contexts/UserContext";
 
-export default function Files(){
-    return (
-        <View>
-            <View style={styles.addButtonContainer}>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => {
-                  /* Logic thêm file */
-                }}
-              >
-                <Ionicons name="add" size={24} color="black" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView>
-              {[
-                {
-                  fileName: "File 1.pdf",
-                  fileSize: "2MB",
-                  uploadTime: "1 ngày trước",
-                  fileType: "pdf",
-                },
-                {
-                  fileName: "File 2.jpg",
-                  fileSize: "3MB",
-                  uploadTime: "2 ngày trước",
-                  fileType: "image",
-                },
-                {
-                  fileName: "File 3.mp4",
-                  fileSize: "5MB",
-                  uploadTime: "3 ngày trước",
-                  fileType: "video",
-                },
-                {
-                  fileName: "File 4.mp3",
-                  fileSize: "4MB",
-                  uploadTime: "4 ngày trước",
-                  fileType: "audio",
-                },
-                {
-                  fileName: "File 5.docx",
-                  fileSize: "1MB",
-                  uploadTime: "5 ngày trước",
-                  fileType: "word",
-                },
-                {
-                  fileName: "File 6.xlsx",
-                  fileSize: "6MB",
-                  uploadTime: "6 ngày trước",
-                  fileType: "excel",
-                },
-                {
-                  fileName: "File 7.pptx",
-                  fileSize: "7MB",
-                  uploadTime: "7 ngày trước",
-                  fileType: "powerpoint",
-                },
-                {
-                  fileName: "File 8.zip",
-                  fileSize: "8MB",
-                  uploadTime: "8 ngày trước",
-                  fileType: "zip",
-                },
-                {
-                  fileName: "File 9.txt",
-                  fileSize: "9MB",
-                  uploadTime: "9 ngày trước",
-                  fileType: "text",
-                },
-              ].map((file, index) => (
-                <FileItem
-                  key={index}
-                  fileName={file.fileName}
-                  fileSize={file.fileSize}
-                  uploadTime={file.uploadTime}
-                  fileType={file.fileType}
-                />
-              ))}
-            </ScrollView>
-          </View>
-    )
+interface MaterialType {
+  id: string;
+  material_name: string;
+  description: string;
+  material_type: string;
+  material_link: string;
+}
+
+export default function Files() {
+  const router = useRouter();
+  const route = useRoute();
+  const { token } = useUser();
+  const { id, name } = route.params as { id: string; name: string };
+  const [materials, setMaterials] = useState<MaterialType[]>([]);
+
+  const getListMaterial = async () => {
+    try {
+      const response: any = await request(
+        `${SERVER_URL}/it5023e/get_material_list`,
+        {
+          method: "POST",
+          body: {
+            token,
+            class_id: id,
+          },
+        }
+      );
+      setMaterials(response.data);
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu:", error);
+    }
+  };
+
+  const deleteFile = async (id: string) => {
+    try {
+      await request(`${SERVER_URL}/it5023e/delete_material`, {
+        method: "POST",
+        body: {
+          token,
+          material_id: id,
+        },
+      });
+      setMaterials(materials.filter((file) => file.id !== id));
+    } catch (error) {
+      console.error("Lỗi khi xóa tài liệu:", error);
+    }
+  };
+
+  useEffect(() => {
+    getListMaterial();
+  }, []);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View>
+        <ScrollView>
+          {materials &&
+            materials.length > 0 &&
+            materials.map((file, index) => (
+              <FileItem
+                key={index}
+                id={file.id}
+                classId={id}
+                link={file.material_link}
+                fileName={file.material_name}
+                fileType={file.material_type}
+                description={file.description}
+                deleteFile={deleteFile}
+              />
+            ))}
+        </ScrollView>
+      </View>
+      <FloatingActionButton
+        onPress={() =>
+          router.push({
+            pathname: "/upload-file",
+            params: { classId: id },
+          })
+        }
+        iconName="add"
+      />
+    </View>
+  );
 }
 const styles = StyleSheet.create({
   addButtonContainer: {
@@ -93,4 +103,4 @@ const styles = StyleSheet.create({
   addButton: {
     marginRight: 10,
   },
-})
+});

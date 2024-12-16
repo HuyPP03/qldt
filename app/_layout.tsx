@@ -46,9 +46,14 @@ export default function RootLayout() {
           <Stack.Screen name="class-detail" options={{ headerShown: false }} />
           <Stack.Screen name="notifications" options={{ headerShown: false }} />
           <Stack.Screen name="chat" options={{ headerShown: false }} />
-          <Stack.Screen name="teacher-survey-detail" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="teacher-survey-detail"
+            options={{ headerShown: false }}
+          />
           <Stack.Screen name="create-survey" options={{ headerShown: false }} />
           <Stack.Screen name="edit-survey" options={{ headerShown: false }} />
+          <Stack.Screen name="upload-file" options={{ headerShown: false }} />
+          <Stack.Screen name="edit-file" options={{ headerShown: false }} />
           <Stack.Screen name="review-absent" options={{ headerShown: false }} />
           <Stack.Screen name="absent-tab" options={{ headerShown: false }} />
         </Stack>

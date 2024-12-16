@@ -24,8 +24,8 @@ import AbsentTab from "./absent-tab";
 export default function ClassDetail() {
   const route = useRoute();
   const router = useRouter();
-  const { id } = route.params as { id: string; name: string };
-  const [activeTab, setActiveTab] = useState("Bài kiểm tra");
+  const { id, tab } = route.params as { id: string; tab?: string };
+  const [activeTab, setActiveTab] = useState(tab || "Bài kiểm tra");
   const [error, setError] = useState<string | null>(null);
   const { userInfo } = useUser();
 
