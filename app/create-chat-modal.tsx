@@ -47,10 +47,10 @@ const CreateChatModal: React.FC<CreateChatModalProps> = ({
         if (res.meta.code === "1000") {
           setContacts(res.data.page_content.reverse());
         } else {
-          console.error("Failed to fetch conversations", res.meta.message);
+          console.log("Failed to fetch conversations", res.meta.message);
         }
       } catch (error) {
-        console.error("Error fetching conversations:", error);
+        console.log("Error fetching conversations:", error);
       } finally {
         setLoading(false);
       }

@@ -41,12 +41,14 @@ async function request<T>(
 
     const response = await fetch(url, finalOptions);
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw errorData;
+    const contentType = response.headers.get("Content-Type");
+    let data;
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      data = await response.text();
     }
 
-    const data = await response.json();
     return data as T;
   } catch (error) {
     if (error instanceof Error) {

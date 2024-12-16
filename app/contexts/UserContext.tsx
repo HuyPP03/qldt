@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import request from "@/utility/request";
 import { useRouter } from "expo-router";
-import { SERVER_URL } from "@env";
+import { SERVER_URL } from "@/utility/env";
 
 export interface UserInfo {
   id: string;
@@ -39,6 +39,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserInfo = async () => {
     try {
+      
+      //await AsyncStorage.removeItem("userToken");
+      //return true;
+  
+
       setLoading(true);
       const token = await AsyncStorage.getItem("userToken");
       setToken(token);
@@ -60,7 +65,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error("Lỗi khi đọc token:", error);
+      console.log("Lỗi khi đọc token:", error);
     } finally {
       setLoading(false);
     }
@@ -72,7 +77,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setUserInfo(null);
       router.replace("/sign-up");
     } catch (error) {
-      console.error("Lỗi khi đăng xuất:", error);
+      console.log("Lỗi khi đăng xuất:", error);
     }
   };
 

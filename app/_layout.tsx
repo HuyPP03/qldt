@@ -9,17 +9,17 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 export default function RootLayout() {
   const router = useRouter();
 
-  useEffect(() => {
-    const checkToken = async () => {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        router.replace("/sign-up");
-      } else {
-        router.replace("/");
-      }
-      console.log(token);
-    };
+  const checkToken = async () => {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      router.replace("/sign-up");
+    } else {
+      router.replace("/");
+    }
 
+    console.log(token);
+  };
+  useEffect(() => {
     checkToken();
   }, []);
 
@@ -62,10 +62,18 @@ export default function RootLayout() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
+              name="student-survey-detail"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="create-survey"
               options={{ headerShown: false }}
             />
             <Stack.Screen name="edit-survey" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="submit-survey"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="upload-file" options={{ headerShown: false }} />
             <Stack.Screen name="edit-file" options={{ headerShown: false }} />
             <Stack.Screen
