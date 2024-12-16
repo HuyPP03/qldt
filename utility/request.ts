@@ -31,8 +31,8 @@ async function request<T>(
       url = `${url}${url.includes("?") ? "&" : "?"}${queryParams}`;
     }
 
-    if (finalOptions.body ) {
-      if(finalOptions.headers["Content-Type"] !== "application/json"){
+    if (finalOptions.body) {
+      if (finalOptions.headers["Content-Type"] !== "application/json") {
         finalOptions.body = finalOptions.body;
       } else {
         finalOptions.body = JSON.stringify(finalOptions.body);

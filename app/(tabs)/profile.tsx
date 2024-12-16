@@ -85,6 +85,14 @@ export default function ProfileScreen() {
   const [avatarFile, setAvatarFile] = useState<ImageFile | null>(null);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
 
+  const convertGoogleDriveLink = (driveLink: string) => {
+    const match = driveLink.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    return null;
+  };
+
   useEffect(() => {
     if (modalVisible) {
       Animated.spring(scaleAnim, {
@@ -116,7 +124,7 @@ export default function ProfileScreen() {
         }
       );
 
-      if (response.code !== 1000) {
+      if (response.code !== "1000") {
         setToast({ message: response.message, type: "error" });
       } else {
         setModalVisible(false);
@@ -136,17 +144,13 @@ export default function ProfileScreen() {
   }, [passwordForm, token]);
 
   const handleUpdateInfo = useCallback(async () => {
+    console.log(avatarFile);
     try {
       const formData = new FormData();
-      formData.append("token", token as string);
-      formData.append("name", infoForm.name);
+      formData.append("token", token!);
 
       if (avatarFile) {
-        formData.append("file", {
-          uri: avatarFile.uri,
-          type: avatarFile.type,
-          name: avatarFile.name,
-        } as any);
+        formData.append("file", avatarFile as any);
       }
 
       const response: any = await request(
@@ -160,7 +164,7 @@ export default function ProfileScreen() {
         }
       );
 
-      if (response.code !== 1000) {
+      if (response.code !== "1000") {
         setIsEditing(false);
         setToast({ message: response.message, type: "error" });
       } else {
@@ -179,7 +183,7 @@ export default function ProfileScreen() {
     } finally {
       setTimeout(() => setToast(null), 3000);
     }
-  }, [infoForm, avatarFile, token]);
+  }, [avatarFile, token]);
 
   const pickImage = async () => {
     try {
@@ -189,12 +193,11 @@ export default function ProfileScreen() {
         aspect: [1, 1],
         quality: 0.8,
       });
-
       if (!result.canceled && result.assets[0]) {
         const file: ImageFile = {
           uri: result.assets[0].uri,
-          type: "image/jpeg",
-          name: "avatar.jpg",
+          type: result.assets[0].mimeType!,
+          name: result.assets[0].fileName!,
         };
         setAvatarFile(file);
         setPreviewUri(file.uri);
@@ -207,7 +210,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // Thêm hàm xử lý hủy bỏ
   const handleCancelEdit = () => {
     setIsEditing(false);
     setInfoForm({ name: userInfo?.name || "" });
@@ -254,9 +256,12 @@ export default function ProfileScreen() {
                 <>
                   {previewUri ? (
                     <Image source={{ uri: previewUri }} style={styles.avatar} />
-                  ) : userInfo?.avatar ? (
+                  ) : userInfo?.avatar &&
+                    convertGoogleDriveLink(userInfo?.avatar) ? (
                     <Image
-                      source={{ uri: userInfo.avatar }}
+                      source={{
+                        uri: convertGoogleDriveLink(userInfo?.avatar) || "",
+                      }}
                       style={styles.avatar}
                     />
                   ) : (

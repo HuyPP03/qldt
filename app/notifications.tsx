@@ -9,178 +9,66 @@ import {
   Alert,
   Image,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import request from "@/utility/request";
 import { useRouter } from "expo-router";
-import { SERVER_URL } from "@/utility/env";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-// Interface cho dữ liệu thông báo
-interface Notification {
-  id: string;
-  type: "assignment" | "announcement" | "grade";
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  course: string;
-}
-
-// Dữ liệu mẫu
-const sampleNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "assignment",
-    title: "Bài tập mới",
-    message: "Giảng viên đã đăng một bài tập mới trong môn Lập trình Web",
-    time: "2 giờ trước",
-    read: false,
-    course: "Lập trình Web",
-  },
-  {
-    id: "2",
-    type: "announcement",
-    title: "Thông báo lịch học",
-    message: "Lớp học ngày mai sẽ được tổ chức online qua Microsoft Teams",
-    time: "3 giờ trước",
-    read: true,
-    course: "Cơ sở dữ liệu",
-  },
-  {
-    id: "3",
-    type: "grade",
-    title: "Điểm kiểm tra giữa kỳ",
-    message: "Điểm kiểm tra giữa kỳ môn Lập trình Web đã được công bố",
-    time: "1 ngày trước",
-    read: false,
-    course: "Lập trình Web",
-  },
-];
-export const useNotifications = () => {
-  const [token, setToken] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const fetchUnreadNotificationCount = async () => {
-    const token = await AsyncStorage.getItem("userToken");
-    if (token) {
-      try {
-        const response = await request<{
-          success: boolean;
-          unreadCount: number;
-        }>(`${SERVER_URL}/it5023e/get_unread_notification_count`, {
-          method: "POST",
-          body: { token },
-        });
-
-        setUnreadCount(response.unreadCount);
-      } catch (error) {
-        console.error("Lỗi lấy số lượng thông báo chưa đọc:", error);
-      }
-    }
-  };
-
-  const fetchNotifications = async () => {
-    const token = await AsyncStorage.getItem("userToken");
-
-    try {
-      const response = await request<{
-        success: boolean;
-        data: Notification[];
-      }>(`${SERVER_URL}/it5023e/get_notifications`, {
-        method: "POST",
-        body: { token, index: 0, count: 4 },
-      });
-
-      setNotifications(response.data);
-      setUnreadCount(response.data.filter((noti) => !noti.read).length);
-    } catch (error) {
-      console.error("Lỗi lấy thông báo:", error);
-    }
-  };
-
-  const markNotificationAsRead = async (notificationId: string) => {
-    const token = await AsyncStorage.getItem("userToken");
-    try {
-      const response = await request(
-        `${SERVER_URL}/it5023e/mark_notification_as_read`,
-        {
-          method: "POST",
-          body: {
-            token,
-            notification_id: notificationId,
-          },
-        }
-      );
-
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((noti) =>
-          noti.id === notificationId ? { ...noti, read: true } : noti
-        )
-      );
-
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error("Lỗi đánh dấu đã đọc:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchUnreadNotificationCount();
-      fetchNotifications();
-    }
-  }, [token]);
-
-  return {
-    notifications,
-    unreadCount,
-    fetchNotifications,
-    fetchUnreadNotificationCount,
-    markNotificationAsRead,
-  };
-};
+import { ActivityIndicator } from "react-native-paper";
+import { Notification, useNotifications } from "./contexts/NotificationContext";
+import { carbon } from "@/utility/carbon";
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { notifications, unreadCount, markNotificationAsRead } =
-    useNotifications();
+  const { notifications, markNotificationAsRead, loading } = useNotifications();
 
   const renderNotificationIcon = (type: string) => {
+    const iconProps = {
+      size: 24,
+      color: "#757575",
+    };
+
     switch (type) {
-      case "assignment":
-        return <Ionicons name="document-text" size={24} color="#2196F3" />;
-      case "announcement":
-        return <Ionicons name="megaphone" size={24} color="#4CAF50" />;
-      case "grade":
-        return <Ionicons name="school" size={24} color="#FF9800" />;
+      case "ABSENCE":
+        return <Ionicons name="person-remove" {...iconProps} color="#FF0000" />;
+      case "ACCEPT_ABSENCE_REQUEST":
+        return (
+          <Ionicons name="checkmark-circle" {...iconProps} color="#4CAF50" />
+        );
+      case "REJECT_ABSENCE_REQUEST":
+        return <Ionicons name="close-circle" {...iconProps} color="#FF9800" />;
+      case "ASSIGNMENT_GRADE":
+        return <Ionicons name="school" {...iconProps} color="#2196F3" />;
       default:
-        return <Ionicons name="notifications" size={24} color="#757575" />;
+        return <Ionicons name="notifications" {...iconProps} />;
     }
   };
 
-  const renderNotification = ({ item }: { item: Notification }) => (
-    <TouchableOpacity
-      style={[styles.notificationItem, !item.read && styles.unreadNotification]}
-      onPress={() => markNotificationAsRead(item.id)}
-    >
-      <View style={styles.notificationContent}>
-        <View style={[styles.iconContainer, styles[`${item.type}Icon`]]}>
-          {renderNotificationIcon(item.type)}
-        </View>
-        <View style={styles.textContainer}>
-          <View style={styles.notificationHeader}>
-            <Text style={styles.notificationTitle}>{item.title}</Text>
-            <Text style={styles.timeText}>{item.time}</Text>
+  const renderNotification = ({ item }: { item: Notification }) => {
+    return (
+      <TouchableOpacity
+        style={[
+          styles.notificationItem,
+          item.status === "UNREAD" && styles.unreadNotification,
+        ]}
+        onPress={() => markNotificationAsRead(item.id)}
+      >
+        <View style={styles.notificationContent}>
+          <View style={styles.iconContainer}>
+            {renderNotificationIcon(item.type)}
           </View>
-          <Text style={styles.courseText}>{item.course}</Text>
-          <Text style={styles.messageText} numberOfLines={2}>
-            {item.message}
-          </Text>
+          <View style={styles.textContainer}>
+            <Text style={styles.notificationTitle}>
+              {item.title_push_notification}
+            </Text>
+            <Text style={styles.messageText} numberOfLines={2}>
+              {item.message}
+            </Text>
+            <Text style={styles.timeText}>
+              {carbon.formatDate(item.sent_time, "HH:mm DD/MM/YYYY")}
+            </Text>
+          </View>
         </View>
-      </View>
-      {!item.read && <View style={styles.unreadDot} />}
-    </TouchableOpacity>
-  );
+        {item.status === "UNREAD" && <View style={styles.unreadDot} />}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -194,33 +82,41 @@ export default function NotificationsScreen() {
         <Text style={styles.headerText}>Thông báo</Text>
       </View>
 
-      <FlatList
-        data={notifications}
-        renderItem={renderNotification}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name="notifications-outline"
-                size={80}
-                color="#E0E0E0"
-              />
-              <View style={styles.iconBadge} />
+      {loading ? (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#ff0000" />
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          renderItem={renderNotification}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContainer}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="notifications-outline"
+                  size={80}
+                  color="#E0E0E0"
+                />
+                <View style={styles.iconBadge} />
+              </View>
+              <Text style={styles.emptyTitle}>Chưa có thông báo nào</Text>
+              <Text style={styles.emptySubtitle}>
+                Bạn sẽ nhận được thông báo khi có cập nhật mới từ{"\n"}các lớp
+                học của bạn
+              </Text>
+              <TouchableOpacity style={styles.refreshButton} onPress={() => {}}>
+                <Ionicons name="refresh-outline" size={20} color="#CC0000" />
+                <Text style={styles.refreshText}>Làm mới</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.emptyTitle}>Chưa có thông báo nào</Text>
-            <Text style={styles.emptySubtitle}>
-              Bạn sẽ nhận được thông báo khi có cập nhật mới từ{"\n"}các lớp học
-              của bạn
-            </Text>
-            <TouchableOpacity style={styles.refreshButton} onPress={() => {}}>
-              <Ionicons name="refresh-outline" size={20} color="#CC0000" />
-              <Text style={styles.refreshText}>Làm mới</Text>
-            </TouchableOpacity>
-          </View>
-        }
-      />
+          }
+        />
+      )}
     </View>
   );
 }
@@ -266,13 +162,14 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     position: "relative",
-    width: 120,
-    height: 120,
+    width: 80,
+    height: 80,
     backgroundColor: "#F5F5F5",
-    borderRadius: 60,
+    borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16,
+    marginRight: 20,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -325,30 +222,32 @@ const styles = StyleSheet.create({
   },
   notificationItem: {
     backgroundColor: "white",
-    padding: 16,
-    marginHorizontal: 12,
-    marginVertical: 6,
-    borderRadius: 16,
+    padding: 8,
+    marginHorizontal: 10,
+    marginVertical: 4,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderColor: "#E0E0E0",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
+    flexDirection: "row",
+    alignItems: "center",
   },
   unreadNotification: {
-    backgroundColor: "#FEFEFE",
+    backgroundColor: "#F9F9F9",
     borderLeftWidth: 4,
     borderLeftColor: "#CC0000",
   },
   notificationContent: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
+    alignItems: "center",
+    flex: 1,
   },
   assignmentIcon: {
     backgroundColor: "#E3F2FD",
@@ -361,22 +260,22 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    gap: 4,
   },
   notificationHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 4,
   },
   notificationTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "bold",
     color: "#1A1A1A",
+    marginBottom: 2,
   },
   timeText: {
-    fontSize: 12,
-    color: "#666",
-    fontWeight: "500",
+    fontSize: 10,
+    color: "#999",
   },
   courseText: {
     fontSize: 13,
@@ -384,17 +283,18 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   messageText: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#444",
-    lineHeight: 20,
+    lineHeight: 16,
+    marginBottom: 2,
   },
   unreadDot: {
     position: "absolute",
-    top: 16,
-    right: 16,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    top: 12,
+    right: 12,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: "#CC0000",
   },
 });
