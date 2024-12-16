@@ -19,6 +19,7 @@ import {
 } from "./interfaces/absent/absent.interface";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
+import { useUser } from "./contexts/UserContext";
 
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(100);
@@ -59,7 +60,7 @@ const Toast = ({ message }: { message: string }) => {
 export default function CreateAbsent({
   onRequestCreated,
   onCreateRequest,
-  classId
+  classId,
 }: {
   onRequestCreated: () => void;
   onCreateRequest: (date: string) => boolean;
@@ -67,6 +68,8 @@ export default function CreateAbsent({
 }) {
   const [startDate, setStartDate] = useState(new Date());
   const [errorMessage, setErrorMessage] = useState("");
+
+  const { token } = useUser();
 
   const [title, setTitle] = useState("");
   const [reason, setReason] = useState("");
@@ -82,7 +85,7 @@ export default function CreateAbsent({
       return;
     }
 
-    const token = await AsyncStorage.getItem("userToken");
+    console.log(classId);
     try {
       const data: CreateAbsentRequest = {
         token: token as string,
@@ -115,8 +118,7 @@ export default function CreateAbsent({
         {
           body: formData,
           headers: {
-            Accept: "application/json",
-            //"Content-Type": "multipart/form-data",
+            "Content-Type": "multipart/form-data",
           },
         }
       );

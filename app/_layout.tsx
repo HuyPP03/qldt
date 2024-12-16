@@ -8,17 +8,17 @@ import "text-encoding-polyfill";
 export default function RootLayout() {
   const router = useRouter();
 
-  useEffect(() => {
-    const checkToken = async () => {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        router.replace("/sign-up");
-      } else {
-        router.replace("/");
-      }
-      console.log(token);
-    };
+  const checkToken = async () => {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      router.replace("/sign-up");
+    } else {
+      router.replace("/");
+    }
 
+    console.log(token);
+  };
+  useEffect(() => {
     checkToken();
   }, []);
 
