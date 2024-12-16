@@ -12,12 +12,14 @@ import {
   ListRenderItem,
   ActivityIndicator,
   Image,
+  Animated,
 } from "react-native";
-import { useRoute, RouteProp, useIsFocused } from "@react-navigation/native";
+import { useRoute, useIsFocused } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useRef } from "react";
+import Modal from "react-native-modal";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Message,
   MessageResponse,
@@ -51,11 +53,16 @@ export default function Chat() {
     partnerId,
   } = route.params as chatParams;
 
-  const [error, setError] = React.useState<string | null>(null);
-  const [messages, setMessages] = React.useState<Message[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [messageChange, setMessageChange] = React.useState<boolean>(false);
-  const [newMessage, setNewMessage] = React.useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newMessage, setNewMessage] = useState<string>("");
+  const [page, setPage] = useState<number>(0);
+  const [isFetchingMore, setIsFetchingMore] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null
+  );
   const isFocused = useIsFocused();
   const { userInfo } = useUser();
   const {
@@ -63,57 +70,59 @@ export default function Chat() {
     fetchConversations,
   } = useMessageContext();
   const flatListRef = useRef<FlatList>(null);
+  const numberPerPage = 20;
 
-  React.useEffect(() => {
-    const fetchMessages = async (count: number) => {
-      const token = await AsyncStorage.getItem("userToken");
+  const fetchMessages = async (page: number) => {
+    const token = await AsyncStorage.getItem("userToken");
 
-      if (!token) {
-        setError("Token is missing");
-        return;
-      }
+    if (!token) {
+      setError("Token is missing");
+      return;
+    }
 
-      try {
-        const res: MessageResponse = await request<any>(
-          `${SERVER_URL}/it5023e/get_conversation`,
-          {
-            method: "POST",
-            body: {
-              token: token,
-              index: 0,
-              count: count,
-              conversation_id: conversationId,
-              mark_as_read: true,
-            },
-          }
-        );
-
-        if (res.meta.code === "1000") {
-          setMessages(res.data.conversation.reverse());
-          await fetchConversations();
-        } else {
-          console.error("Failed to fetch conversations", res.meta.message);
+    try {
+      const res: MessageResponse = await request<any>(
+        `${SERVER_URL}/it5023e/get_conversation`,
+        {
+          method: "POST",
+          body: {
+            token: token,
+            index: page,
+            count: numberPerPage,
+            conversation_id: conversationId,
+            mark_as_read: true,
+          },
         }
-      } catch (error) {
-        console.error("Error fetching conversations:", error);
-      } finally {
-        setLoading(false);
+      );
+
+      if (res.meta.code === "1000") {
+        if (page === 0) {
+          setMessages(res.data.conversation);
+        } else {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            ...res.data.conversation,
+          ]);
+        }
+        await fetchConversations();
+      } else {
+        console.error("Failed to fetch conversations", res.meta.message);
       }
-    };
-
-    fetchMessages(200);
-    scrollToBottomNoAnimation();
-  }, [conversationId, messageChange]);
-
-  const scrollToBottom = () => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: true });
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+    } finally {
+      setLoading(false);
+      setIsFetchingMore(false);
     }
   };
 
+  useEffect(() => {
+    fetchMessages(page);
+  }, [conversationId, page]);
+
   const scrollToBottomNoAnimation = () => {
     if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: false });
+      flatListRef.current.scrollToOffset({ animated: false, offset: 0 });
     }
   };
 
@@ -125,11 +134,9 @@ export default function Chat() {
       unread: messageStatus.UNREAD,
       message_id: message.id.toString(),
     };
-    // if (message.sender.id != userInfo?.id) {
-    //   setMessages((prevMessages) => [...prevMessages, receivedMessage]);
-    // }
     if (isFocused && message.sender.id != userInfo?.id) {
-      setMessageChange(!messageChange);
+      setMessages((prevMessages) => [receivedMessage, ...prevMessages]);
+      scrollToBottomNoAnimation();
     }
   };
 
@@ -141,8 +148,51 @@ export default function Chat() {
       unread: messageStatus.READ,
       message_id: getRandomString(10),
     };
-    // setMessages((prevMessages) => [...prevMessages, newMessage]);
-    if (isFocused) setMessageChange(!messageChange);
+    if (isFocused) {
+      setMessages((prevMessages) => [newMessage, ...prevMessages]);
+      scrollToBottomNoAnimation();
+    }
+  };
+
+  const Toast = ({ message }: { message: string }) => {
+    const translateY = new Animated.Value(100);
+
+    React.useEffect(() => {
+      // Animation hiện lên
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+        speed: 12,
+        bounciness: 8,
+      }).start();
+
+      // Animation ẩn đi sau 3 giây
+      const timer = setTimeout(() => {
+        Animated.timing(translateY, {
+          toValue: 150,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }, 2700);
+
+      return () => {
+        clearTimeout(timer);
+        setError(null);
+      };
+    }, []);
+
+    return (
+      <Animated.View
+        style={[
+          styles.toastContainer,
+          {
+            transform: [{ translateY }],
+          },
+        ]}
+      >
+        <Text style={styles.toastText}>{message}</Text>
+      </Animated.View>
+    );
   };
 
   const getRandomString = (length: number) => {
@@ -157,7 +207,7 @@ export default function Chat() {
     return result;
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     addMessageListener(handleNewReceiveMessage);
     return () => {
       removeMessageListener(handleNewReceiveMessage);
@@ -176,7 +226,6 @@ export default function Chat() {
           avatar,
         },
         content: newMessage,
-        // conversation_id: conversationId,
       };
       sendMessage(message);
       handleNewSendMessage(message);
@@ -184,33 +233,88 @@ export default function Chat() {
     }
   };
 
-  const handleDeleteMessage = (messageId: string) => {
-    setMessages((prevMessages) =>
-      prevMessages.filter((message) => message.message_id !== messageId)
-    );
-    // Not implement
-    console.log("Delete message", messageId);
+  const handleDeleteMessage = async (messageId: string) => {
+    const token = await AsyncStorage.getItem("userToken");
+    const data = {
+      token: token as string,
+      message_id: messageId,
+      partner_id: partnerId,
+    };
+
+    try {
+      const res: any = await request(`${SERVER_URL}/it5023e/delete_message`, {
+        body: data,
+      });
+      if (res.meta.code === "1000") {
+        console.log("Message deleted successfully");
+        // setMessages((prevMessages) =>
+        //   prevMessages.map((message: Message) => {
+        //     if (message.message_id === messageId) {
+        //       return { ...message, content: null };
+        //     }
+        //     return message;
+        //   })
+        // );
+        setPage(0);
+        fetchMessages(0);
+      } else {
+        setError(`Failed to delete message ${res.meta.message}`);
+      }
+    } catch (error: any) {
+      setError(`Error deleting message: ${error?.data || error}`);
+    } finally {
+      setIsModalVisible(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!isFetchingMore) {
+      setIsFetchingMore(true);
+      setPage((prevPage) => prevPage + numberPerPage);
+    }
+  };
+
+  const handleLongPress = (messageId: string, content: string) => {
+    if (content == null) return;
+    setSelectedMessageId(messageId);
+    setIsModalVisible(true);
   };
 
   const renderMessage: ListRenderItem<Message> = ({ item }) => {
     const isSent = item.sender.id == userInfo?.id;
+    const isDeleted = item.message == null;
 
     return (
-      <View
+      <TouchableOpacity
+        onLongPress={() => handleLongPress(item.message_id!, item.message)}
         style={[styles.messageRow, isSent && styles.userMessageRow]}
         key={item.message_id}
       >
-        <View style={isSent ? styles.sentMessage : styles.receivedMessage}>
+        <View
+          style={
+            isDeleted
+              ? styles.deleteMessage
+              : isSent
+              ? styles.sentMessage
+              : styles.receivedMessage
+          }
+        >
           <Text
-            style={isSent ? styles.messageSendText : styles.messageReceiveText}
+            style={
+              isDeleted
+                ? styles.deletedMessageText
+                : isSent
+                ? styles.messageSendText
+                : styles.messageReceiveText
+            }
           >
-            {item.message}
+            {isDeleted ? "Tin nhắn này đã bị xóa" : item.message}
           </Text>
           <Text style={styles.messageTime}>
             {carbon.formatDate(item.created_at, "HH:mm DD/MM/YYYY")}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -222,7 +326,12 @@ export default function Chat() {
         barStyle="light-content"
       />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity
+          onPress={async () => {
+            await fetchMessages(0);
+            router.back();
+          }}
+        >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
 
@@ -261,8 +370,14 @@ export default function Chat() {
             style={styles.messageList}
             renderItem={renderMessage}
             keyExtractor={(item) => item.message_id || getRandomString(10)}
-            onContentSizeChange={scrollToBottom}
-            onLayout={scrollToBottom}
+            onEndReached={messages.length >= 20 ? handleLoadMore : null}
+            onEndReachedThreshold={0.1}
+            inverted={true}
+            ListFooterComponent={
+              isFetchingMore ? (
+                <ActivityIndicator size="small" color="#ff0000" />
+              ) : null
+            }
           />
         ) : null}
 
@@ -293,6 +408,28 @@ export default function Chat() {
           </View>
         </KeyboardAvoidingView>
       </View>
+
+      <Modal
+        isVisible={isModalVisible}
+        onBackdropPress={() => setIsModalVisible(false)}
+        style={styles.bottomModal}
+      >
+        <View style={styles.modalContent}>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => handleDeleteMessage(selectedMessageId!)}
+          >
+            <Text style={styles.modalButtonText}>Delete Message</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => setIsModalVisible(false)}
+          >
+            <Text style={styles.modalButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+      {error ? <Toast message={error} /> : null}
     </SafeAreaView>
   );
 }
@@ -405,6 +542,21 @@ const styles = StyleSheet.create({
     shadowRadius: 1.0,
     elevation: 1,
   },
+  deleteMessage: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 20,
+    borderTopRightRadius: 5,
+    maxWidth: "80%",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.0,
+    elevation: 1,
+  },
   messageSendText: {
     fontSize: 16,
     color: "#fff",
@@ -444,5 +596,57 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     padding: 5,
+  },
+  bottomModal: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    alignItems: "center",
+  },
+  modalButton: {
+    padding: 10,
+    width: "100%",
+    alignItems: "center",
+  },
+  modalButtonText: {
+    fontSize: 18,
+    color: "#CC0000",
+  },
+  toastContainer: {
+    position: "absolute",
+    bottom: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: "#ffebee",
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#CC0000",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  toastText: {
+    color: "#CC0000",
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  deletedMessageText: {
+    fontSize: 16,
+    color: "#999",
+    fontStyle: "italic",
+    lineHeight: 20,
   },
 });
