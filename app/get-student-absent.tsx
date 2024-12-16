@@ -27,9 +27,8 @@ import {
 } from "./interfaces/absent/absent.interface";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WebView } from "react-native-webview";
-import { create } from "react-test-renderer";
 
-const GetStudentAbsentRequests = forwardRef((props, ref) => {
+const GetStudentAbsentRequests = forwardRef((props: any, ref) => {
   const [absentRequests, setAbsentRequests] = useState<AbsentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -38,7 +37,8 @@ const GetStudentAbsentRequests = forwardRef((props, ref) => {
   const [selectedRequest, setSelectedRequest] = useState<AbsentRequest | null>(
     null
   );
-  const pageSize = "5";
+  const pageSize = "4";
+  const classId = props.classId;
 
   useEffect(() => {
     fetchAbsentRequests();
@@ -50,7 +50,7 @@ const GetStudentAbsentRequests = forwardRef((props, ref) => {
     try {
       const req: GetStudentAbsentRequest = {
         token: token as string,
-        class_id: "838688",
+        class_id: classId,
         pageable_request: {
           page: page.toString(),
           page_size: pageSize,

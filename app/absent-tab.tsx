@@ -13,7 +13,11 @@ import GetStudentAbsentRequests from "./get-student-absent";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-export default function AbsentTab() {
+interface AbsentTabProps {
+  classId: string;
+}
+
+export default function AbsentTab({ classId }: AbsentTabProps) {
   const router = useRouter();
   const layout = useWindowDimensions();
   const [index, setIndex] = React.useState(0);
@@ -45,10 +49,16 @@ export default function AbsentTab() {
           <CreateAbsent
             onRequestCreated={handleRequestCreated}
             onCreateRequest={onRequestCreated}
+            classId={classId}
           />
         );
       case "getStudentAbsentRequests":
-        return <GetStudentAbsentRequests ref={getStudentAbsentRequestsRef} />;
+        return (
+          <GetStudentAbsentRequests
+            ref={getStudentAbsentRequestsRef}
+            props={{ classId }}
+          />
+        );
       default:
         return null;
     }
@@ -56,15 +66,6 @@ export default function AbsentTab() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Quản lí nghỉ phép</Text>
-      </View>
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}

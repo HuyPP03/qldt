@@ -59,11 +59,12 @@ const Toast = ({ message }: { message: string }) => {
 export default function CreateAbsent({
   onRequestCreated,
   onCreateRequest,
+  classId
 }: {
   onRequestCreated: () => void;
   onCreateRequest: (date: string) => boolean;
+  classId: string;
 }) {
-  const [classId, setClassId] = useState("838688");
   const [startDate, setStartDate] = useState(new Date());
   const [errorMessage, setErrorMessage] = useState("");
 

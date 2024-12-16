@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  ScrollView, 
+  ScrollView,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,35 +18,32 @@ import StudentSurveys from "./student-surveys";
 import Files from "./files";
 import GetStudentAbsentRequests from "./get-student-absent";
 import ReviewAbsentRequests from "./review-absent";
-
+import { AbsentStatus } from "./interfaces/absent/absent.interface";
+import AbsentTab from "./absent-tab";
 
 export default function ClassDetail() {
   const route = useRoute();
   const router = useRouter();
   const { id } = route.params as { id: string; name: string };
   const [activeTab, setActiveTab] = useState("Bài kiểm tra");
-  const [error, setError] = useState<string | null>(null); 
+  const [error, setError] = useState<string | null>(null);
   const { userInfo } = useUser();
 
-  
-  
   const renderContent = () => {
     switch (activeTab) {
       case "Bài kiểm tra":
         return userInfo?.role === "LECTURER" ? (
-          <TeacherSurveys/>
+          <TeacherSurveys />
         ) : (
-          <StudentSurveys/>
+          <StudentSurveys />
         );
       case "Tệp":
-        return (
-          <Files/>
-        );
+        return <Files />;
       case "Nghỉ học":
         return userInfo?.role === "LECTURER" ? (
           <ReviewAbsentRequests classId={id} />
         ) : (
-          <StudentSurveys/>
+          <AbsentTab classId={id} />
         );
       default:
         return null;
@@ -75,18 +72,20 @@ export default function ClassDetail() {
           </TouchableOpacity>
         ))}
       </View>
-      
+
       {renderContent()}
 
-      {error ? <Toast message={error} onDismiss={() => setError(null)} /> : null}
+      {error ? (
+        <Toast message={error} onDismiss={() => setError(null)} />
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, 
-    justifyContent: "flex-start", 
+    flex: 1,
+    justifyContent: "flex-start",
   },
   header: {
     backgroundColor: "#CC0000",

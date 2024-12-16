@@ -11,7 +11,6 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { SERVER_URL } from "@env";
 import request from "../utility/request";
 import { useUser } from "./contexts/UserContext";
@@ -24,22 +23,23 @@ import {
   ReviewAbsentResponse,
   TranslatedAbsentStatus,
 } from "./interfaces/absent/absent.interface";
-import { useRoute } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import { WebView } from "react-native-webview";
 
 interface reviewAbsentParams {
   classId: string;
+  startDate?: string;
+  endDate?: string;
 }
 
-const ReviewAbsentRequests = ({classId}: reviewAbsentParams) => {
+const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
   const { token } = useUser();
 
-  console.log( classId )
+  console.log(classId);
 
   const [absentRequests, setAbsentRequests] = useState<AbsentRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [index, setIndex] = useState(0);
   const [routes] = useState([
@@ -49,17 +49,52 @@ const ReviewAbsentRequests = ({classId}: reviewAbsentParams) => {
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedFileUrl, setSelectedFileUrl] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+
+  function getOneDayBefore(dateString: string): string {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() - 1);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const fetchClassInfo = async () => {
+    try {
+      const data = {
+        token: token,
+        class_id: classId,
+      };
+      const res: any = await request(`${SERVER_URL}/it5023e/get_class_info`, {
+        body: data,
+      });
+
+      if (res.meta.code === "1000") {
+        setStartDate(res.data.start_date);
+        setEndDate(getOneDayBefore(res.data.end_date)); //do api set < end_date nen phai the nay
+      } else {
+        console.error(
+          "Failed to fetch class info:",
+          res.data,
+          "-",
+          res.meta.message
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching class info:", error);
+    }
+  };
 
   const fetchAbsentRequests = useCallback(async () => {
     try {
-      
-      
       const req: GetAbsentRequest = {
         token: token as string,
         class_id: classId,
         date: filterDate?.toISOString().split("T")[0],
       };
-      console.log(req)
+      console.log(req);
       const response: GetAbsentResponse = await request(
         `${SERVER_URL}/it5023e/get_absence_requests`,
         {
@@ -88,6 +123,10 @@ const ReviewAbsentRequests = ({classId}: reviewAbsentParams) => {
   useEffect(() => {
     fetchAbsentRequests();
   }, [fetchAbsentRequests]);
+
+  useEffect(() => {
+    fetchClassInfo();
+  }, []);
 
   const handleReview = async (requestId: string, status: AbsentStatus) => {
     try {
@@ -232,19 +271,19 @@ const ReviewAbsentRequests = ({classId}: reviewAbsentParams) => {
         </Text>
       </TouchableOpacity>
       {showDatePicker && (
-        <View style={styles.datePickerWrapper}>
-          <DateTimePicker
-            value={filterDate ?? new Date()}
-            mode="date"
-            display="default"
-            onChange={(event, date) => {
-              setShowDatePicker(false);
-              if (date) setFilterDate(date);
-            }}
-            themeVariant="light"
-            accentColor="#CC0000"
-          />
-        </View>
+        <DateTimePicker
+          value={filterDate ?? new Date(startDate)}
+          mode="date"
+          display="default"
+          onChange={(event, date) => {
+            setShowDatePicker(false);
+            if (date) setFilterDate(date);
+          }}
+          themeVariant="light"
+          accentColor="#CC0000"
+          minimumDate={new Date(startDate)}
+          maximumDate={new Date(endDate)}
+        />
       )}
       {loading ? (
         <ActivityIndicator size="large" color="#CC0000" />
@@ -463,11 +502,12 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     alignItems: "center",
+    height: "50%",
     maxHeight: "80%",
   },
   filePreview: {
-    width: "100%",
-    height: 400,
+    width: 200,
+    height: "80%",
     marginBottom: 20,
   },
   closeButton: {
