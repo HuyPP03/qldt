@@ -48,7 +48,7 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({
           body: {
             token: token,
             index: 0,
-            count: 10,
+            count: 20,
           },
         }
       );
