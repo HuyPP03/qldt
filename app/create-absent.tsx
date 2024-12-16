@@ -74,23 +74,51 @@ export default function CreateAbsent({
   const [title, setTitle] = useState("");
   const [reason, setReason] = useState("");
   const [evidence, setEvidence] = useState<any>(null);
-  const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [classDetail, setClassDetail] = useState<any>(null);
+
+  const fetchClassDetail = async () => {
+    try {
+      const response: any = await request(
+        `${SERVER_URL}/it5023e/get_class_info`,
+        {
+          method: "POST",
+          body: {
+            token,
+            class_id: classId,
+          },
+        }
+      );
+
+      if (response) {
+        setClassDetail(response.data);
+      } else {
+        throw new Error("Failed to fetch class detail");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchClassDetail();
+  }, []);
+
+  console.log(classDetail);
 
   const handleCreateAbsent = async () => {
-    const existedDate = onCreateRequest(date.toISOString().split("T")[0]);
+    const existedDate = onCreateRequest(startDate.toISOString().split("T")[0]);
     if (existedDate) {
       setErrorMessage("Đơn nghỉ phép cho ngày này đã tồn tại!");
       setTimeout(() => setErrorMessage(""), 3000);
       return;
     }
 
-    console.log(classId);
     try {
       const data: CreateAbsentRequest = {
         token: token as string,
         classId,
-        date: date.toISOString().split("T")[0],
+        date: startDate.toISOString().split("T")[0],
         reason,
         title,
         file: evidence
@@ -122,9 +150,21 @@ export default function CreateAbsent({
           },
         }
       );
-      console.log(response);
 
-      // TODO: Create common code to handle error
+      const formDataSendMail = new FormData();
+
+      formDataSendMail.append("message", title);
+      formDataSendMail.append("token", token as string);
+      formDataSendMail.append("toUser", classDetail?.lecturer_account_id);
+      formDataSendMail.append("type", "ABSENCE");
+
+      await request(`${SERVER_URL}/it5023e/send_notification`, {
+        method: "POST",
+        body: formDataSendMail,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       if (response.meta.code === "1004") {
         throw new Error(response.meta.message);
       }
