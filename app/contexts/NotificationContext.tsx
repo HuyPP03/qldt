@@ -19,11 +19,9 @@ export interface Notification {
 }
 
 interface NotificationContextType {
-  notifications: Notification[];
   unreadCount: number;
-  loading: boolean;
   fetchUnreadNotificationCount: () => Promise<void>;
-  markNotificationAsRead: (notificationId: number) => Promise<void>;
+  setUnreadCount: any;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -35,43 +33,8 @@ export function NotificationProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
   const { token } = useUser();
-
-  useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  const loadNotifications = async () => {
-    if (token) {
-      setLoading(true);
-      try {
-        const response: any = await request(
-          `${SERVER_URL}/it5023e/get_notifications`,
-          {
-            method: "POST",
-            body: { token, index: 0, count: 10 },
-          }
-        );
-        if (response && response.data) {
-          setNotifications(response.data);
-          setUnreadCount(
-            response.data.filter(
-              (noti: Notification) => noti.status === "UNREAD"
-            ).length
-          );
-        } else {
-          console.log("Dữ liệu không hợp lệ:", response);
-        }
-      } catch (error) {
-        console.log("Lỗi tải thông báo:", error);
-      } finally {
-        setLoading(false); // Đảm bảo loading được tắt
-      }
-    }
-  };
 
   const fetchUnreadNotificationCount = async () => {
     if (token) {
@@ -96,42 +59,16 @@ export function NotificationProvider({
     }
   };
 
-  const markNotificationAsRead = async (notificationId: number) => {
-    try {
-      const response = await request(
-        `${SERVER_URL}/it5023e/mark_notification_as_read`,
-        {
-          method: "POST",
-          body: {
-            token,
-            notification_id: notificationId,
-          },
-        }
-      );
-      if (response) {
-        setNotifications((prevNotifications) =>
-          prevNotifications.map((noti: Notification) =>
-            noti.id === notificationId ? { ...noti, status: "READ" } : noti
-          )
-        );
-
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      } else {
-        console.log("Lỗi đánh dấu đã đọc:", response);
-      }
-    } catch (error) {
-      console.log("Lỗi đánh dấu đã đọc:", error);
-    }
-  };
+  useEffect(() => {
+    fetchUnreadNotificationCount();
+  }, [token]);
 
   return (
     <NotificationContext.Provider
       value={{
-        notifications,
         unreadCount,
-        loading,
+        setUnreadCount,
         fetchUnreadNotificationCount,
-        markNotificationAsRead,
       }}
     >
       {children}
