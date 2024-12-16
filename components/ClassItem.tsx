@@ -7,6 +7,7 @@ interface ClassItemProps {
   name: string;
   status: string;
   lecturerName: string;
+  classType: string;
 }
 
 const ClassItem: React.FC<ClassItemProps> = ({
@@ -14,6 +15,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   name,
   status,
   lecturerName,
+  classType,
 }) => {
   const router = useRouter();
 
@@ -53,8 +55,8 @@ const ClassItem: React.FC<ClassItemProps> = ({
         <Text style={styles.iconText}>{name.charAt(0)}</Text>
       </View>
       <View style={styles.textContainer}>
-        <Text style={styles.className}>{name}</Text>
-        <Text style={styles.lecturerName}>{lecturerName}</Text>
+        <Text style={styles.className}>{name} - {classType}</Text>
+        <Text style={styles.lecturerName}>GV: {lecturerName}</Text>
         <Text style={styles.classStatus}>{statusText}</Text>
       </View>
     </TouchableOpacity>

@@ -65,23 +65,39 @@ export default function AbsentTab({ classId }: AbsentTabProps) {
   };
 
   return (
-    <View style={styles.container}>
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={{ width: layout.width }}
-        renderTabBar={(props) => (
-          <TabBar
-            {...props}
-            indicatorStyle={{ backgroundColor: "#CC0000" }}
-            style={{ backgroundColor: "white" }}
-            activeColor="#CC0000"
-            inactiveColor="#666"
-          />
-        )}
-      />
-    </View>
+    <TabView
+      navigationState={{ index, routes }}
+      renderScene={renderScene}
+      onIndexChange={setIndex}
+      initialLayout={{ width: layout.width }}
+      renderTabBar={(props) => (
+        <View style={styles.tabContainer}>
+          {props.navigationState.routes.map((route, i) => (
+            <TouchableOpacity
+              key={route.key}
+              style={[
+                styles.tabButton,
+                index === i ? styles.activeTabButton : null, 
+              ]}
+              onPress={() => setIndex(i)}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  { color: index === i ? "#CC0000" : "#333" }, 
+                ]}
+              >
+                {route.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+      style={styles.tabView}
+    />
+
+
+
   );
 }
 
@@ -118,5 +134,35 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" && {
       cursor: "pointer",
     }),
+  },
+  tabContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 10,
+  },
+  
+  tabButton: {
+    flex: 1,
+    padding: 10,
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 40,
+    marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  
+  activeTabButton: {
+    backgroundColor: "#FFEEEE", 
+    borderColor: "#CC0000", 
+  },
+  
+  tabText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#333", 
+  },
+  tabView: {
+    backgroundColor: "white",
   },
 });

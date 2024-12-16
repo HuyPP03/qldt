@@ -53,12 +53,12 @@ export const useSocket = (
         await fetchConversation();
         listenersRef.current.forEach((listener) => listener(messageReceived));
       } catch (error) {
-        console.error("Error parsing received message:", error);
+        console.log("Error parsing received message:", error);
       }
     };
 
     const onError = (error: any) => {
-      console.error("Connection error:", error);
+      console.log("Connection error:", error);
       setIsConnected(false);
 
       if (!reconnectIntervalRef.current) {
@@ -86,10 +86,10 @@ export const useSocket = (
         stompClient.send("/chat/message", {}, JSON.stringify(message));
         console.log("Message sent:", message);
       } catch (error) {
-        console.error("Error sending message:", error);
+        console.log("Error sending message:", error);
       }
     } else {
-      console.error("STOMP client is not connected.");
+      console.log("STOMP client is not connected.");
     }
   };
 

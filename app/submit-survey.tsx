@@ -8,7 +8,6 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -23,26 +22,46 @@ import { useRoute } from "@react-navigation/native";
 import { Toast } from "@/components/Toast";
 import LoadingIndicator from "@/components/LoadingIndicator";
 
-export default function UploadFile() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+interface SubmissionResponse {
+  data: SubmissionData;
+  meta: MetaData;
+}
+
+interface SubmissionData {
+  id: number;                
+  assignment_id: number;     
+  submission_time: string;  
+  grade: number | null;      
+  file_url: string;  
+  text_response: string;    
+  student_account: StudentAccount;  
+}
+
+interface StudentAccount {
+  account_id: string;        
+  last_name: string;        
+  first_name: string;       
+  email: string;             
+  student_id: string;       
+}
+
+interface MetaData {
+  code: string;              
+  message: string;          
+}
+
+export default function SubmitSurvey() {
+  const route = useRoute();
+  const { assignmentId, classId, surveyName } = route.params as { assignmentId: string, classId: string, surveyName: string };
+  
+  const [textResponse, setTextResponse] = useState("");
   const [file, setFile] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const { token, userInfo } = useUser();
 
-  const route = useRoute();
-
-  const { classId } = route.params as { classId: string };
-
-  useEffect(() => {
-    if (userInfo?.role !== "LECTURER") {
-      router.replace("/");
-    }
-  }, [userInfo]);
-
-  const fileUpload = async () => {
+  const handleFileUpload = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -77,32 +96,21 @@ export default function UploadFile() {
     }
   };
 
-  const handleUploadFile = async () => {
-    if (!title || !description || !file) {
-      setError("Hãy điền đầy đủ thông tin");
-      setTimeout(() => setError(""), 3000);
-      return;
+  const handleSubmitSurvey = async () => {
+    if(!textResponse || !file){
+      setError("Hãy nhập trường còn thiếu")
+      return
     }
 
     try {
       setLoading(true);
       const formData = new FormData();
-
-      if (file) {
-        formData.append("file", file);
-
-        const materialType = file.name.split(".").pop()?.toUpperCase();
-        formData.append("materialType", materialType!);
-      } else {
-        throw new Error("Invalid file type.");
-      }
-
+      formData.append("file", file);
+      formData.append("textResponse", textResponse);
       formData.append("token", token!);
-      formData.append("classId", classId);
-      formData.append("title", title);
-      formData.append("description", description);
+      formData.append("assignmentId", assignmentId);
 
-      const response = await request(`${SERVER_URL}/it5023e/upload_material`, {
+      const response = await request<SubmissionResponse>(`${SERVER_URL}/it5023e/submit_survey`, {
         method: "POST",
         headers: {
           "Content-Type": "multipart/form-data",
@@ -110,12 +118,20 @@ export default function UploadFile() {
         body: formData,
       });
 
-      router.push({
-        pathname: "/class-detail",
-        params: { id: classId, tab: "Tệp" },
-      });
+      console.log(response);
+
+      if(response.meta.code === "1000"){
+        router.push({
+          pathname: "/class-detail",
+          params: { id: classId },
+        });
+      } else {
+        setError(`Không nộp được bài kiểm tra ${response.data}`)
+        console.log(`submit-survey ${response.data}`)
+      }  
     } catch (error) {
-      setError("Không tạo được bài kiểm tra");
+      setError(`Không nộp được bài kiểm tra ${error}`);
+      console.log(error)
       setTimeout(() => setError(""), 3000);
     } finally {
       setLoading(false);
@@ -127,47 +143,53 @@ export default function UploadFile() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() =>
+            router.push({
+              pathname: "/class-detail",
+              params: { id: classId },
+            })
+          }
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Upload file</Text>
+        <Text style={styles.headerText}>Nộp bài kiểm tra</Text>
       </View>
-      {loading ? (
-        <LoadingIndicator loadingText="Đang upload file" />
-      ) : (
-        <ScrollView style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nhập tên file *"
-            placeholderTextColor="#CC0000"
-            value={title}
-            onChangeText={setTitle}
-          />
+      {loading ? <LoadingIndicator loadingText="Đang nộp bài kiểm tra"/> : (
+      <ScrollView style={styles.formContainer}>
+        <View>
+          <Text style={styles.title}>
+            Sinh viên: {userInfo?.name}
+          </Text>
+          <Text style={styles.title}>
+            Lớp: {classId}
+          </Text>
+        </View>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Nhập vào lời giải *"
+          placeholderTextColor="#CC0000"
+          value={textResponse}
+          onChangeText={setTextResponse}
+          multiline
+          numberOfLines={4}
+        />
 
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Mô tả *"
-            placeholderTextColor="#CC0000"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-          />
+        <TouchableOpacity
+          style={styles.uploadButton}
+          onPress={handleFileUpload}
+        >
+          <Text style={styles.uploadButtonText}>
+            {file ? file.name : "Tải lên tệp *"}
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.uploadButton} onPress={fileUpload}>
-            <Text style={styles.uploadButtonText}>
-              {file ? file.name : "Tải lên tệp *"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.createButton}
-            onPress={handleUploadFile}
-          >
-            <Text style={styles.buttonText}>Upload</Text>
-          </TouchableOpacity>
-        </ScrollView>
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={handleSubmitSurvey}
+        >
+          <Text style={styles.buttonText}>Nộp bài</Text>
+        </TouchableOpacity>
+      </ScrollView>
       )}
       {error ? (
         <Toast message={error} onDismiss={() => setError(null)} />
@@ -219,7 +241,8 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   textArea: {
-    height: 100,
+    height: 300,
+    maxHeight: 500,
     textAlignVertical: "top",
   },
   uploadButton: {
@@ -270,5 +293,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 16,
     fontSize: 14,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000000",
+    marginBottom: 5,
   },
 });

@@ -96,7 +96,7 @@ export default function CreateAbsent({
         throw new Error("Failed to fetch class detail");
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
   };
 

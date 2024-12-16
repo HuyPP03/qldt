@@ -45,7 +45,7 @@ export default function Files() {
       );
       setMaterials(response.data);
     } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu:", error);
+      console.log("Lỗi khi lấy dữ liệu:", error);
     } finally {
       setRefreshing(false)
     }
@@ -62,7 +62,7 @@ export default function Files() {
       });
       setMaterials(materials.filter((file) => file.id !== id));
     } catch (error) {
-      console.error("Lỗi khi xóa tài liệu:", error);
+      console.log("Lỗi khi xóa tài liệu:", error);
     }
   };
 

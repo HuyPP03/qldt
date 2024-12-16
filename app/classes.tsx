@@ -11,7 +11,9 @@ import {
   Pressable,
   Animated,
   RefreshControl,
+  TouchableWithoutFeedback,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import ClassItem from "../components/ClassItem";
 import { useRouter } from "expo-router";
@@ -73,6 +75,12 @@ export default function ClassesScreen() {
   const [completedClasses, setCompletedClasses] = useState<ClassData[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>("active");
 
+  const [filters, setFilters] = useState({
+    lecturerName: "",
+    classType: "",
+    status: "",
+  });
+
   const [refreshing, setRefreshing] = useState<boolean>(false); 
 
   const [pageSize] = useState<number>(100); 
@@ -81,6 +89,23 @@ export default function ClassesScreen() {
   const role = userInfo?.role;
   const account_id = userInfo?.id;
   console.log(account_id);
+
+  const applyFilters = () => {
+    let selectedClasses = getClassesForSelectedTab();
+  
+    if (filters.lecturerName) {
+      selectedClasses = selectedClasses.filter((c) =>
+        c.lecturer_name.toLowerCase().includes(filters.lecturerName.toLowerCase())
+      );
+    }
+    if (filters.classType) {
+      selectedClasses = selectedClasses.filter(
+        (c) => c.class_type === filters.classType
+      );
+    }
+  
+    setFilteredClasses(selectedClasses);
+  };
 
   const loadClasses = async (page: number) => {
     setLoading(true);
@@ -299,29 +324,70 @@ export default function ClassesScreen() {
             animationType="none"
             onRequestClose={closeModal}
           >
-            <View style={styles.modalOverlay}>
-              <Animated.View style={[
-                styles.modalContainer,
-                { transform: [{ translateY: slideAnim }] },
-              ]}>
-                <Text style={styles.modalTitle}>Sắp xếp</Text>
-                <Pressable onPress={() => handleSort("name_asc")} style={styles.modalOption}>
-                  <Text>Tên (A-Z)</Text>
-                </Pressable>
-                <Pressable onPress={() => handleSort("name_desc")} style={styles.modalOption}>
-                  <Text>Tên (Z-A)</Text>
-                </Pressable>
-                <Pressable onPress={() => handleSort("newest")} style={styles.modalOption}>
-                  <Text>Mới nhất</Text>
-                </Pressable>
-                <Pressable onPress={() => handleSort("oldest")} style={styles.modalOption}>
-                  <Text>Cũ nhất</Text>
-                </Pressable>
-                <TouchableOpacity onPress={closeModal}>
-                  <Text style={styles.closeButton}>Đóng</Text>
-                </TouchableOpacity>
-              </Animated.View>
-            </View>
+            
+            <TouchableWithoutFeedback onPress={closeModal}>
+              <View style={styles.modalOverlay}>
+                <Animated.View style={[
+                  styles.modalContainer,
+                  { transform: [{ translateY: slideAnim }] },
+                ]}>
+                  <Text style={styles.modalTitle}>Sắp xếp</Text>
+                  <Pressable onPress={() => handleSort("name_asc")} style={styles.modalOption}>
+                    <Text>Tên (A-Z)</Text>
+                  </Pressable>
+                  <Pressable onPress={() => handleSort("name_desc")} style={styles.modalOption}>
+                    <Text>Tên (Z-A)</Text>
+                  </Pressable>
+                  <Pressable onPress={() => handleSort("newest")} style={styles.modalOption}>
+                    <Text>Mới nhất</Text>
+                  </Pressable>
+                  <Pressable onPress={() => handleSort("oldest")} style={styles.modalOption}>
+                    <Text>Cũ nhất</Text>
+                  </Pressable>
+                  <Text style={styles.modalTitle}>Bộ lọc</Text>
+                  <TextInput
+                    placeholder="Tên giảng viên"
+                    style={styles.modalInput}
+                    value={filters.lecturerName}
+                    onChangeText={(text) =>
+                      setFilters((prev) => ({ ...prev, lecturerName: text }))
+                    }
+                  />
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={filters.classType}
+                      onValueChange={(itemValue) =>
+                        setFilters((prev) => ({ ...prev, classType: itemValue }))
+                      }
+                      style={styles.picker}
+                      dropdownIconColor="#333" 
+                      mode="dropdown" 
+                    >
+                      <Picker.Item label="Chọn loại lớp học" value="" />
+                      <Picker.Item label="LT" value="LT" />
+                      <Picker.Item label="BT" value="BT" />
+                      <Picker.Item label="LT-BT" value="LT-BT" />
+                    </Picker>
+                  </View>
+  
+                  {/* Apply Filter Button */}
+                  <TouchableOpacity
+                    style={styles.applyButton}
+                    onPress={() => {
+                      closeModal();
+                      applyFilters();
+                    }}
+                  >
+                    <Text style={styles.applyButtonText}>Áp dụng</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={closeModal}>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={closeModal}>
+                    <Text style={styles.closeButton}>Đóng</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+            </TouchableWithoutFeedback>
           </Modal>
         </View>
 
@@ -343,6 +409,7 @@ export default function ClassesScreen() {
                 name={item.class_name}
                 status={item.status}
                 lecturerName={item.lecturer_name}
+                classType={item.class_type}
               />
               </View>
             ))}
@@ -440,12 +507,14 @@ const styles = StyleSheet.create({
   listContainer: {
     flexGrow: 1,
     paddingBottom: 20,
+    minHeight: "85%",
   },
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     paddingHorizontal: 10,
+    minHeight: "85%",
   },
   pagination: {
     flexDirection: "row",
@@ -455,13 +524,13 @@ const styles = StyleSheet.create({
   },
   paginationContainer: {
     paddingVertical: 16, 
-    backgroundColor: "#eee", 
   },
   pageButton: {
     padding: 10,
     backgroundColor: "#CC0000",
     borderRadius: 5,
     marginHorizontal: 10,
+    width: "15%",
   },
   disabledButton: {
     backgroundColor: "#ccc",
@@ -528,7 +597,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    marginBottom: 10,
+    marginTop: 20,
+    margin: 10,
     textAlign: "center",
     fontWeight: "bold",
   },
@@ -565,5 +635,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 10,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 8,
+    marginVertical: 5,
+    borderRadius: 5,
+    height: 50,
+    fontSize: 16,
+  },
+  applyButton: {
+    backgroundColor: "#CC0000",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  applyButtonText: {
+    color: "white",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    overflow: "hidden",
+    marginVertical: 8,
+  },
+  picker: {
+    height: 55,
+    width: "100%",
   },
 });

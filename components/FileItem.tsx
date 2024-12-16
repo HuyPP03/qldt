@@ -87,7 +87,7 @@ const FileItem: React.FC<FileItemProps> = ({
 
   const openFileLink = () => {
     Linking.openURL(link).catch((err) =>
-      console.error("Failed to open link:", err)
+      console.log("Failed to open link:", err)
     );
   };
 

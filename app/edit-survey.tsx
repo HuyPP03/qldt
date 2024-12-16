@@ -74,7 +74,7 @@ export default function EditSurvey() {
         }
       }
     } catch (error) {
-      console.error("Error selecting the file:", error);
+      console.log("Error selecting the file:", error);
     }
   };
 

@@ -65,7 +65,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error("Lỗi khi đọc token:", error);
+      console.log("Lỗi khi đọc token:", error);
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setUserInfo(null);
       router.replace("/sign-up");
     } catch (error) {
-      console.error("Lỗi khi đăng xuất:", error);
+      console.log("Lỗi khi đăng xuất:", error);
     }
   };
 

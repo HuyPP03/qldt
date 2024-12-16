@@ -106,10 +106,10 @@ export default function Chat() {
         }
         await fetchConversations();
       } else {
-        console.error("Failed to fetch conversations", res.meta.message);
+        console.log("Failed to fetch conversations", res.meta.message);
       }
     } catch (error) {
-      console.error("Error fetching conversations:", error);
+      console.log("Error fetching conversations:", error);
     } finally {
       setLoading(false);
       setIsFetchingMore(false);

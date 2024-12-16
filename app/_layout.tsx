@@ -62,10 +62,15 @@ export default function RootLayout() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
+              name="student-survey-detail"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="create-survey"
               options={{ headerShown: false }}
             />
             <Stack.Screen name="edit-survey" options={{ headerShown: false }} />
+            <Stack.Screen name="submit-survey" options={{ headerShown: false }} />
             <Stack.Screen name="upload-file" options={{ headerShown: false }} />
             <Stack.Screen name="edit-file" options={{ headerShown: false }} />
             <Stack.Screen

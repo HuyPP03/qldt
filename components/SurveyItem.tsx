@@ -45,9 +45,9 @@ const SurveyItem: React.FC<SurveyItemProps> = ({
         <Text style={styles.className}>Lớp: {className}</Text>
         <Text style={styles.deadline}>Hạn: {formatDate(deadline)}</Text>
       </View>
-      <TouchableOpacity onPress={onMenuPress} style={[styles.menuIcon, { padding: 10, paddingRight:0 }]}>
+      {onMenuPress && <TouchableOpacity onPress={onMenuPress} style={[styles.menuIcon, { padding: 10, paddingRight:0 }]}>
         <Ionicons name="ellipsis-vertical" size={24} color="#666" /> 
-      </TouchableOpacity>
+      </TouchableOpacity>}
     </TouchableOpacity>
   );
 };

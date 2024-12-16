@@ -149,11 +149,11 @@ export default function TeacherSurvey() {
       if (data.meta.code === "1000") {
         setSurveys(data.data);
       } else {
-        console.error("Failed to fetch surveys:", data.meta.message);
+        console.log("Failed to fetch surveys:", data.meta.message);
         setError(data.meta.message);
       }
     } catch (error) {
-      console.error("Error fetching surveys:", error);
+      console.log("Error fetching surveys:", error);
       setError("Unable to fetch surveys");
     } finally {
       setLoading(false);

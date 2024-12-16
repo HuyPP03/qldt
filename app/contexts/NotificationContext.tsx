@@ -42,7 +42,7 @@ export function NotificationProvider({
 
   useEffect(() => {
     loadNotifications();
-  }, [token]);
+  }, []);
 
   const loadNotifications = async () => {
     if (token) {
@@ -63,10 +63,10 @@ export function NotificationProvider({
             ).length
           );
         } else {
-          console.error("Dữ liệu không hợp lệ:", response);
+          console.log("Dữ liệu không hợp lệ:", response);
         }
       } catch (error) {
-        console.error("Lỗi tải thông báo:", error);
+        console.log("Lỗi tải thông báo:", error);
       } finally {
         setLoading(false); // Đảm bảo loading được tắt
       }
@@ -88,10 +88,10 @@ export function NotificationProvider({
         if (response && response.data !== undefined) {
           setUnreadCount(response.data);
         } else {
-          console.error("Dữ liệu không hợp lệ:", response);
+          console.log("Dữ liệu không hợp lệ:", response);
         }
       } catch (error) {
-        console.error("Lỗi lấy số lượng thông báo chưa đọc:", error);
+        console.log("Lỗi lấy số lượng thông báo chưa đọc:", error);
       }
     }
   };
@@ -117,10 +117,10 @@ export function NotificationProvider({
 
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } else {
-        console.error("Lỗi đánh dấu đã đọc:", response);
+        console.log("Lỗi đánh dấu đã đọc:", response);
       }
     } catch (error) {
-      console.error("Lỗi đánh dấu đã đọc:", error);
+      console.log("Lỗi đánh dấu đã đọc:", error);
     }
   };
 

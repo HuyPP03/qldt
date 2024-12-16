@@ -75,7 +75,7 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
         setStartDate(res.data.start_date);
         setEndDate(getOneDayBefore(res.data.end_date)); //do api set < end_date nen phai the nay
       } else {
-        console.error(
+        console.log(
           "Failed to fetch class info:",
           res.data,
           "-",
@@ -83,7 +83,7 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
         );
       }
     } catch (error) {
-      console.error("Error fetching class info:", error);
+      console.log("Error fetching class info:", error);
     }
   };
 
@@ -107,7 +107,7 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
       if (response.meta.code === "1000") {
         setAbsentRequests(response.data.page_content);
       } else {
-        console.error(
+        console.log(
           "Failed to fetch absent requests:",
           response.data,
           "-",
@@ -115,7 +115,7 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
         );
       }
     } catch (error) {
-      console.error("Error fetching absent requests:", error);
+      console.log("Error fetching absent requests:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -177,13 +177,13 @@ const ReviewAbsentRequests = ({ classId }: reviewAbsentParams) => {
         console.log("Reviewed absent request", requestId);
         fetchAbsentRequests(); // Refetch data after review
       } else {
-        console.error(
+        console.log(
           "Failed to approve absent request",
           response.meta.message
         );
       }
     } catch (error) {
-      console.error("Error approving absent request:", error);
+      console.log("Error approving absent request:", error);
     }
   };
 

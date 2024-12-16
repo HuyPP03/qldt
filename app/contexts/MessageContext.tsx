@@ -57,13 +57,13 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({
         setUnreadMessagesCount(Number(res.data.num_new_message));
         setConversations(res.data.conversations);
       } else {
-        console.error(
+        console.log(
           "Failed to fetch unread messages and conversations",
           res.meta.message
         );
       }
     } catch (error) {
-      console.error("Error fetching unread messages and conversations:", error);
+      console.log("Error fetching unread messages and conversations:", error);
     }
   };
 

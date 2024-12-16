@@ -75,7 +75,7 @@ export default function EditFile() {
         }
       }
     } catch (error) {
-      console.error("Error selecting the file:", error);
+      console.log("Error selecting the file:", error);
     }
   };
 
@@ -94,7 +94,7 @@ export default function EditFile() {
       setTitle(response.data.material_name);
       setDescription(response.data.description);
     } catch (error) {
-      console.error("L��i khi lấy dữ liệu:", error);
+      console.log("L��i khi lấy dữ liệu:", error);
     }
   };
 

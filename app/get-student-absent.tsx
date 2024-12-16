@@ -70,7 +70,7 @@ const GetStudentAbsentRequests = forwardRef((props: any, ref) => {
         setAbsentRequests(response.data.page_content);
         setTotalPages(parseInt(response.data.page_info.total_page, 10));
       } else {
-        console.error(
+        console.log(
           "Failed to fetch absent requests:",
           response.data,
           "-",
@@ -78,7 +78,7 @@ const GetStudentAbsentRequests = forwardRef((props: any, ref) => {
         );
       }
     } catch (error) {
-      console.error("Error fetching absent requests:", error);
+      console.log("Error fetching absent requests:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
