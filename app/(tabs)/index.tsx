@@ -140,10 +140,13 @@ export default function HomeScreen() {
 
               {/* User Info Section */}
               <View style={styles.drawerUserSection}>
-                {userInfo?.avatar ? (
+                {userInfo?.avatar &&
+                convertGoogleDriveLink(userInfo?.avatar) ? (
                   <Image
-                    source={{ uri: userInfo.avatar }}
-                    style={styles.drawerAvatar}
+                    source={{
+                      uri: convertGoogleDriveLink(userInfo?.avatar) || "",
+                    }}
+                    style={styles.avatar}
                   />
                 ) : (
                   <View style={styles.drawerAvatarPlaceholder}>
