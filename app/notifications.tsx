@@ -14,9 +14,112 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator } from "react-native-paper";
 import { Notification, useNotifications } from "./contexts/NotificationContext";
 import { carbon } from "@/utility/carbon";
+import request from "@/utility/request";
+import { useUser } from "./contexts/UserContext";
+import { SERVER_URL } from "@/utility/env";
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { notifications, markNotificationAsRead, loading } = useNotifications();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [hasMore, setHasMore] = useState(true); // Kiểm tra xem còn dữ liệu không
+  const { token } = useUser();
+  const { setUnreadCount } = useNotifications();
+  const PAGE_SIZE = 7; // Số lượng thông báo mỗi lần tải
+
+  useEffect(() => {
+    if (token) {
+      loadNotifications(true); // Load dữ liệu lần đầu
+    }
+  }, [token]);
+
+  const loadNotifications = async (reset = false) => {
+    if (!token) return;
+    if (reset) setLoading(true);
+    else setLoadingMore(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const response: any = await request(
+        `${SERVER_URL}/it5023e/get_notifications`,
+        {
+          method: "POST",
+          body: {
+            token,
+            index: reset ? 0 : pageIndex * PAGE_SIZE,
+            count: PAGE_SIZE,
+          },
+        }
+      );
+
+      if (response && response.data) {
+        const newNotifications = response.data;
+
+        if (reset) {
+          setNotifications(newNotifications);
+        } else {
+          setNotifications((prevNotifications) => {
+            const uniqueNotifications = new Map(
+              [...prevNotifications, ...newNotifications].map((noti) => [
+                noti.id,
+                noti,
+              ])
+            );
+            return Array.from(uniqueNotifications.values());
+          });
+        }
+
+        setHasMore(newNotifications.length === PAGE_SIZE);
+
+        if (reset) {
+          setUnreadCount(
+            newNotifications.filter(
+              (noti: Notification) => noti.status === "UNREAD"
+            ).length
+          );
+        }
+      } else {
+        console.error("Dữ liệu không hợp lệ:", response);
+      }
+    } catch (error) {
+      console.error("Lỗi tải thông báo:", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      if (!reset) {
+        setPageIndex((prev) => prev + 1); // Tăng pageIndex khi tải thêm dữ liệu
+      }
+    }
+  };
+
+  const markNotificationAsRead = async (notificationId: number) => {
+    try {
+      const response = await request(
+        `${SERVER_URL}/it5023e/mark_notification_as_read`,
+        {
+          method: "POST",
+          body: {
+            token,
+            notification_id: notificationId,
+          },
+        }
+      );
+      if (response) {
+        setNotifications((prevNotifications) =>
+          prevNotifications.map((noti: Notification) =>
+            noti.id === notificationId ? { ...noti, status: "READ" } : noti
+          )
+        );
+
+        setUnreadCount((prev: number) => Math.max(0, prev - 1));
+      } else {
+        console.error("Lỗi đánh dấu đã đọc:", response);
+      }
+    } catch (error) {
+      console.error("Lỗi đánh dấu đã đọc:", error);
+    }
+  };
 
   const renderNotificationIcon = (type: string) => {
     const iconProps = {
@@ -81,7 +184,6 @@ export default function NotificationsScreen() {
         </TouchableOpacity>
         <Text style={styles.headerText}>Thông báo</Text>
       </View>
-
       {loading ? (
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
@@ -115,6 +217,19 @@ export default function NotificationsScreen() {
               </TouchableOpacity>
             </View>
           }
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ padding: 10 }}>
+                <ActivityIndicator size="small" color="#CC0000" />
+              </View>
+            ) : null
+          }
+          onEndReached={() => {
+            if (hasMore) {
+              loadNotifications();
+            }
+          }}
+          onEndReachedThreshold={0.9}
         />
       )}
     </View>
