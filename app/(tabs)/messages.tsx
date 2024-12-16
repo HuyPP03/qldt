@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Modal,
+  Image,
 } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
@@ -17,6 +18,8 @@ import { ChatConversation } from "../interfaces/chat/chat.interface";
 import { Ionicons } from "@expo/vector-icons";
 import CreateChatModal from "../create-chat-modal";
 import { useMessageContext } from "../contexts/MessageContext";
+import { defaultAvatar } from "@/constants/Image";
+import { getGoogleDriveDirectLink } from "@/utility/helper";
 
 export default function MessagesScreen() {
   const router = useRouter();
@@ -67,7 +70,14 @@ export default function MessagesScreen() {
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
-        <Text style={styles.avatar}>{item.partner.avatar}</Text>
+        <Image
+          source={
+            item.partner.avatar
+              ? { uri: getGoogleDriveDirectLink(item.partner.avatar) }
+              : defaultAvatar
+          }
+          style={styles.avatar}
+        />
       </View>
       <View style={styles.userInfo}>
         <View style={styles.userHeader}>
@@ -199,7 +209,9 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   avatar: {
-    fontSize: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   userInfo: {
     flex: 1,
