@@ -39,7 +39,7 @@ export default function NotificationsScreen() {
     if (reset) setLoading(true);
     else setLoadingMore(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
       const response: any = await request(
         `${SERVER_URL}/it5023e/get_notifications`,

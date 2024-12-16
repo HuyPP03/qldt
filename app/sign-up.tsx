@@ -67,9 +67,7 @@ export default function SignUp() {
           role,
         },
       });
-      console.log(signUpResponse.data);
-
-      console.log("respon data", signUpResponse);
+      setVerificationCode(signUpResponse.verify_code);
       setShowModal(true);
     } catch (error) {
       Alert.alert("Lỗi", "Đã có lỗi xảy ra khi đăng ký");
