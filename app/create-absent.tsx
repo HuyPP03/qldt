@@ -20,6 +20,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
 import { useUser } from "./contexts/UserContext";
+import LoadingIndicator from "@/components/LoadingIndicator";
 
 const Toast = ({ message }: { message: string }) => {
   const translateY = new Animated.Value(100);
@@ -76,6 +77,7 @@ export default function CreateAbsent({
   const [evidence, setEvidence] = useState<any>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [classDetail, setClassDetail] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchClassDetail = async () => {
     try {
@@ -113,6 +115,7 @@ export default function CreateAbsent({
     }
 
     try {
+      setLoading(true);
       const data: CreateAbsentRequest = {
         token: token as string,
         classId,
@@ -179,6 +182,8 @@ export default function CreateAbsent({
         error.message ?? "Có lỗi xảy ra khi tạo đơn nghỉ phép, vui lòng thử lại"
       );
       setTimeout(() => setErrorMessage(""), 3000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -226,7 +231,9 @@ export default function CreateAbsent({
     }
   };
 
-  return (
+  return loading ? (
+    <LoadingIndicator loadingText="Đang nộp đơn xin nghỉ" />
+  ) : (
     <View style={styles.container}>
       <ScrollView style={styles.formContainer}>
         <TextInput

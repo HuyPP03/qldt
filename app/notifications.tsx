@@ -71,14 +71,6 @@ export default function NotificationsScreen() {
         }
 
         setHasMore(newNotifications.length === PAGE_SIZE);
-
-        if (reset) {
-          setUnreadCount(
-            newNotifications.filter(
-              (noti: Notification) => noti.status === "UNREAD"
-            ).length
-          );
-        }
       } else {
         console.error("Dữ liệu không hợp lệ:", response);
       }
@@ -116,6 +108,7 @@ export default function NotificationsScreen() {
       } else {
         console.error("Lỗi đánh dấu đã đọc:", response);
       }
+      console.log(notification?.message);
       router.push(JSON.parse(notification?.message || "{}"));
     } catch (error) {
       console.error("Lỗi đánh dấu đã đọc:", error);
